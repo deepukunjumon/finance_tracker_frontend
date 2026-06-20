@@ -122,11 +122,11 @@ function SettingsPage() {
       const formData = new FormData();
       formData.append('name',    name);
       formData.append('currency', currency);
-      formData.append('profile_picture', blob, 'avatar.jpg');
+      formData.append('profile_picture', blob, 'profile.jpg');
       const updated = await updateProfile(formData);
       updateUser(updated);
       setCropDialogOpen(false);
-      toast.success('Avatar updated.');
+      toast.success('Profile picture updated.');
     } catch (e) { toast.error(getErrorMessage(e)); }
     finally { setIsSavingAvatar(false); }
   };
