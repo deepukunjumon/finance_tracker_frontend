@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -26,15 +27,16 @@ import { createTransaction, deleteTransaction, getTransactions } from '@/api/tra
 import { getAccounts } from '@/api/accounts';
 import { getCategories } from '@/api/categories';
 import { useAuthStore } from '@/store/authStore';
-import { formatCurrency, formatDate, getErrorMessage } from '@/lib/utils';
+import { formatCurrency, formatDate, formatTime, getCurrencySymbol, getErrorMessage } from '@/lib/utils';
 import type { Account, Category, Transaction } from '@/types';
 
 const schema = z.object({
   account_id:  z.string().min(1, 'Required'),
-  category_id: z.string().optional(),
+  category_id: z.string().min(1, 'Required'),
   type:        z.enum(['income', 'expense', 'transfer']),
   amount:      z.coerce.number().positive('Must be positive'),
   date:        z.string().min(1, 'Required'),
+  time:        z.string().optional(),
   note:        z.string().optional(),
 });
 
@@ -52,7 +54,11 @@ function TransactionsPage() {
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { type: 'expense', date: new Date().toISOString().split('T')[0] },
+    defaultValues: {
+      type: 'expense',
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toTimeString().slice(0, 5),
+    },
   });
   const txType = watch('type');
 
@@ -115,7 +121,7 @@ function TransactionsPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium">{t.category?.name ?? 'Uncategorised'}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(t.date)} · {t.account?.name}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(t.date)}{t.time ? ` · ${formatTime(t.time)}` : ''} · {t.account?.name}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -166,25 +172,38 @@ function TransactionsPage() {
             </div>
             <div className="space-y-1">
               <Label>Category</Label>
-              <Select onValueChange={(v) => setValue('category_id', v)}>
-                <SelectTrigger><SelectValue placeholder="Select category (optional)" /></SelectTrigger>
+              <Select onValueChange={(v) => setValue('category_id', v, { shouldValidate: true })}>
+                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
                   {categories.filter((c) => c.type === txType || txType === 'transfer').map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {errors.category_id && <p className="text-xs text-destructive">{errors.category_id.message}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label>Amount</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                  {getCurrencySymbol(currency)}
+                </span>
+                <Input type="number" step="0.01" min="0.01" {...register('amount')} placeholder="0.00" className="pl-8" />
+              </div>
+              {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label>Amount</Label>
-                <Input type="number" step="0.01" min="0.01" {...register('amount')} placeholder="0.00" />
-                {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
+                <Label>Date</Label>
+                <DatePicker
+                  value={watch('date')}
+                  onChange={(v) => setValue('date', v, { shouldValidate: true })}
+                />
+                {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
               </div>
               <div className="space-y-1">
-                <Label>Date</Label>
-                <Input type="date" {...register('date')} />
-                {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
+                <Label>Time</Label>
+                <Input type="time" {...register('time')} className="w-full" />
               </div>
             </div>
             <div className="space-y-1">
@@ -197,8 +216,6 @@ function TransactionsPage() {
           </form>
         </DialogContent>
       </Dialog>
-
-      <FAB onCreated={(tx) => setTransactions((prev) => [tx, ...prev])} />
     </div>
   );
 }

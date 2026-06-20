@@ -21,7 +21,7 @@ export function ColorPalette({ value, onChange, className }: ColorPaletteProps) 
           key={color}
           type="button"
           onClick={() => onChange(color)}
-          className="w-7 h-7 rounded-full flex items-center justify-center ring-offset-background transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          className="w-7 h-7 rounded-full flex items-center justify-center ring-offset-background transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
           style={{ backgroundColor: color }}
           title={color}
         >

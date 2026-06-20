@@ -86,6 +86,7 @@ export interface Transaction {
   amount: number;
   note: string | null;
   date: string;
+  time: string | null;
   tags: string[] | null;
   created_at: string;
 }
@@ -152,6 +153,7 @@ export interface DashboardStats {
   recent_transactions: Transaction[];
   monthly_trend: { month: string; type: TransactionType; total: number }[];
   expense_by_category: { category_id: string; total: number; category?: Category }[];
+  all_by_category: { category_id: string; type: TransactionType; total: number; category?: Category }[];
 }
 
 export interface ReportSummary {

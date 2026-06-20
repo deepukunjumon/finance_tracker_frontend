@@ -165,7 +165,7 @@ function AccountsPage() {
             return (
               <div
                 key={account.id}
-                className={`rounded-xl border bg-card p-5 flex flex-col gap-4 hover:shadow-sm transition-all ${account.is_archived ? 'opacity-60' : ''}`}
+                className={`rounded-xl border bg-card p-5 flex flex-col gap-4 hover:shadow-sm transition-all cursor-default ${account.is_archived ? 'opacity-60' : ''}`}
                 style={accentColor ? { borderLeftColor: accentColor, borderLeftWidth: 3 } : undefined}
               >
                 <div className="flex items-start justify-between">

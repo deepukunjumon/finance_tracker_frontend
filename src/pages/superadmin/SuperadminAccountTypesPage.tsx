@@ -63,7 +63,7 @@ function SuperadminAccountTypesPage() {
             {types.map((t) => (
               <div key={t.id} className={`flex items-center justify-between px-5 py-3 ${!t.is_active ? 'opacity-50' : ''}`}>
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                  <div className="size-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
                     style={{ backgroundColor: t.color }}>{t.name[0]}</div>
                   <div>
                     <p className="text-sm font-medium">{t.name}</p>

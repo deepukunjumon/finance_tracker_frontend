@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  CalendarDays,
   CreditCard,
+  Download,
   Folder,
   PiggyBank,
   Plus,
@@ -27,14 +27,14 @@ import {
 } from "recharts";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { MonthPicker } from "@/components/ui/date-picker";
 import { AddAccountDialog } from "@/components/AddAccountDialog";
 import { ChartEmptyState } from "@/components/ChartEmptyState";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { FAB } from "@/components/FAB";
 import { getDashboardStats } from "@/api/dashboard";
 import { useAuthStore } from "@/store/authStore";
-import { formatCurrency, formatDate, getErrorMessage } from "@/lib/utils";
+import { formatCurrency, formatDate, formatTime, getErrorMessage } from "@/lib/utils";
 import type { Account, AccountType, DashboardStats } from "@/types";
 
 const ACCOUNT_TYPE_CONFIG: Record<
@@ -146,30 +146,110 @@ function AccountCard({
   );
 }
 
+function inlineStyles(source: SVGElement, target: SVGElement) {
+  const computed = window.getComputedStyle(source);
+  const important = ['fill', 'stroke', 'stroke-width', 'font-size', 'font-family', 'font-weight', 'text-anchor', 'dominant-baseline', 'opacity', 'visibility', 'display'];
+  important.forEach((prop) => {
+    const val = computed.getPropertyValue(prop);
+    if (val) (target as unknown as HTMLElement).style.setProperty(prop, val);
+  });
+  const srcChildren = source.children;
+  const tgtChildren = target.children;
+  for (let i = 0; i < srcChildren.length; i++) {
+    if (srcChildren[i] instanceof SVGElement && tgtChildren[i] instanceof SVGElement) {
+      inlineStyles(srcChildren[i] as SVGElement, tgtChildren[i] as SVGElement);
+    }
+  }
+}
+
+function downloadChartAsImage(container: HTMLElement, filename: string) {
+  const svg = container.querySelector("svg");
+  if (!svg) return;
+
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  const { width, height } = svg.getBoundingClientRect();
+  clone.setAttribute("width", String(width));
+  clone.setAttribute("height", String(height));
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+  inlineStyles(svg as unknown as SVGElement, clone);
+
+  // Remove any Recharts tooltip/hover layers
+  clone.querySelectorAll(".recharts-tooltip-wrapper").forEach((el) => el.remove());
+
+  const serializer = new XMLSerializer();
+  const svgStr = serializer.serializeToString(clone);
+  const svgBlob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(svgBlob);
+
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    const scale = 2;
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0, width, height);
+    URL.revokeObjectURL(url);
+
+    const a = document.createElement("a");
+    a.download = filename;
+    a.href = canvas.toDataURL("image/png");
+    a.click();
+  };
+  img.src = url;
+}
+
 function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
   const currency = user?.currency ?? "INR";
 
-  const load = async () => {
-    setIsLoading(true);
+  const expensePieRef = useRef<HTMLDivElement>(null);
+  const categoryPieRef = useRef<HTMLDivElement>(null);
+
+  const load = useCallback(async (month?: string, showSkeleton = true) => {
+    if (showSkeleton) setIsLoading(true);
     try {
-      setStats(await getDashboardStats());
+      setStats(await getDashboardStats(month || undefined));
     } catch (e) {
       toast.error(getErrorMessage(e));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
+
+  const handleMonthChange = async (v: string) => {
+    setSelectedMonth(v);
+    setChartLoading(true);
+    try {
+      const monthStats = await getDashboardStats(v || undefined);
+      setStats((prev) => prev ? {
+        ...prev,
+        monthly_income:       monthStats.monthly_income,
+        monthly_expense:      monthStats.monthly_expense,
+        monthly_trend:        monthStats.monthly_trend,
+        expense_by_category:  monthStats.expense_by_category,
+        all_by_category:      monthStats.all_by_category,
+      } : monthStats);
+    } catch (e) {
+      toast.error(getErrorMessage(e));
+    } finally {
+      setChartLoading(false);
+    }
+  };
 
   const trendData = (() => {
     if (!stats) return [];
@@ -179,17 +259,28 @@ function DashboardPage() {
     > = {};
     stats.monthly_trend.forEach(({ month, type, total }) => {
       if (!map[month]) map[month] = { month, Income: 0, Expense: 0 };
-      if (type === "income") map[month].Income = total;
-      if (type === "expense") map[month].Expense = total;
+      if (type === "income") map[month].Income = Number(total);
+      if (type === "expense") map[month].Expense = Number(total);
     });
     return Object.values(map);
   })();
 
-  const pieData =
+  const expensePieData =
     stats?.expense_by_category.map((e) => ({
       name: e.category?.name ?? "Uncategorised",
-      value: e.total,
+      value: Number(e.total),
     })) ?? [];
+
+  const allCategoryPieData = (() => {
+    if (!stats?.all_by_category) return [];
+    const map: Record<string, { name: string; value: number }> = {};
+    stats.all_by_category.forEach((entry) => {
+      const name = entry.category?.name ?? "Uncategorised";
+      if (!map[name]) map[name] = { name, value: 0 };
+      map[name].value += Number(entry.total);
+    });
+    return Object.values(map).sort((a, b) => b.value - a.value);
+  })();
 
   if (isLoading) {
     return (
@@ -279,22 +370,23 @@ function DashboardPage() {
         )}
       </div>
 
+      {/* Month picker shared across charts */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold">Charts & Insights</h2>
+        <MonthPicker
+          value={selectedMonth}
+          onChange={handleMonthChange}
+          placeholder="This month"
+          clearable
+          className="h-8 w-40 text-xs"
+        />
+      </div>
+
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-opacity ${chartLoading ? 'opacity-50 pointer-events-none' : ''}`}>
         {/* Income vs Expense trend */}
         <div className="rounded-xl border bg-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold">Income vs Expense</h3>
-            <div className="flex items-center gap-2">
-              <CalendarDays size={14} className="text-muted-foreground" />
-              <Input
-                type="month"
-                className="h-7 w-36 text-xs"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-          </div>
+          <h3 className="text-sm font-semibold mb-4">Income vs Expense</h3>
           {trendData.length === 0 ? (
             <ChartEmptyState />
           ) : (
@@ -332,23 +424,88 @@ function DashboardPage() {
 
         {/* Expense by category — donut */}
         <div className="rounded-xl border bg-card p-5">
-          <h3 className="text-sm font-semibold mb-4">Expense by Category</h3>
-          {pieData.length === 0 ? (
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold">Expense by Category</h3>
+            {expensePieData.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-7 cursor-pointer"
+                onClick={() => expensePieRef.current && downloadChartAsImage(expensePieRef.current, "expense_by_category.png")}
+              >
+                <Download size={13} /> Download
+              </Button>
+            )}
+          </div>
+          {expensePieData.length === 0 ? (
             <ChartEmptyState message="No expense data this month" />
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
+            <div ref={expensePieRef}>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={expensePieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={75}
+                    paddingAngle={3}
+                  >
+                    {expensePieData.map((_, i) => (
+                      <Cell
+                        key={i}
+                        fill={CHART_COLORS[i % CHART_COLORS.length]}
+                        stroke="none"
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v: number) => formatCurrency(v, currency)}
+                    contentStyle={{ borderRadius: "8px", fontSize: 12 }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* All transactions by category pie chart */}
+      <div className={`rounded-xl border bg-card p-5 transition-opacity ${chartLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold">All Transactions by Category</h3>
+          {allCategoryPieData.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs h-7 cursor-pointer"
+              onClick={() => categoryPieRef.current && downloadChartAsImage(categoryPieRef.current, "transactions_by_category.png")}
+            >
+              <Download size={13} /> Download
+            </Button>
+          )}
+        </div>
+        {allCategoryPieData.length === 0 ? (
+          <ChartEmptyState message="No transaction data this month" />
+        ) : (
+          <div ref={categoryPieRef}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
-                  data={pieData}
+                  data={allCategoryPieData}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={75}
-                  paddingAngle={3}
+                  outerRadius={90}
+                  paddingAngle={2}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  labelLine={{ strokeWidth: 1 }}
                 >
-                  {pieData.map((_, i) => (
+                  {allCategoryPieData.map((_, i) => (
                     <Cell
                       key={i}
                       fill={CHART_COLORS[i % CHART_COLORS.length]}
@@ -363,8 +520,8 @@ function DashboardPage() {
                 <Legend wrapperStyle={{ fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Recent transactions */}
@@ -398,7 +555,7 @@ function DashboardPage() {
                     <p className="text-sm font-medium">
                       {t.category?.name ?? "Uncategorised"}
                     </p>
-                    <p className="text-xs text-muted-foreground">{formatDate(t.date)}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(t.date)}{t.time ? ` · ${formatTime(t.time)}` : ''}</p>
                   </div>
                 </div>
                 <span
@@ -416,10 +573,10 @@ function DashboardPage() {
       <AddAccountDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onCreated={() => void load()}
+        onCreated={() => void load(selectedMonth, false)}
       />
 
-      <FAB onCreated={() => void load()} />
+      <FAB onCreated={() => void load(selectedMonth, false)} />
     </div>
   );
 }

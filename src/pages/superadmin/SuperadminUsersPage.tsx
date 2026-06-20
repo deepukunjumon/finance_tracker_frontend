@@ -4,18 +4,19 @@ import { RefreshCw, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { api } from '@/api/axios';
-import { getErrorMessage } from '@/lib/utils';
+import { formatDate, getErrorMessage } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 interface AdminUser {
-  id:            string;
-  name:          string;
-  email:         string;
-  role:          string;
-  currency:      string;
-  deleted_at:    string | null;
-  last_login_at: string | null;
-  created_at:    string;
+  id:              string;
+  name:            string;
+  email:           string;
+  role:            string;
+  currency:        string;
+  profile_picture: string | null;
+  deleted_at:      string | null;
+  last_login_at:   string | null;
+  created_at:      string;
   accounts_count?: number;
 }
 
@@ -57,7 +58,7 @@ function SuperadminUsersPage() {
     } catch (e) { toast.error(getErrorMessage(e)); }
   };
 
-  const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString() : 'Never';
+  const fmtDate = (d: string | null) => d ? formatDate(d) : 'Never';
 
   return (
     <div className="space-y-6">
@@ -67,8 +68,9 @@ function SuperadminUsersPage() {
       </div>
 
       <div className="rounded-lg border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-muted-foreground">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
+          <thead className="bg-muted/50 text-muted-foreground sticky top-0 z-10">
             <tr>
               <th className="text-left px-4 py-3 font-medium">User</th>
               <th className="text-left px-4 py-3 font-medium">Role</th>
@@ -82,7 +84,16 @@ function SuperadminUsersPage() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  {Array.from({ length: 6 }).map((_, j) => (
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-full bg-muted animate-pulse shrink-0" />
+                      <div className="space-y-1.5 flex-1">
+                        <div className="h-3.5 bg-muted rounded animate-pulse w-24" />
+                        <div className="h-3 bg-muted rounded animate-pulse w-32" />
+                      </div>
+                    </div>
+                  </td>
+                  {Array.from({ length: 5 }).map((_, j) => (
                     <td key={j} className="px-4 py-3">
                       <div className="h-4 bg-muted rounded animate-pulse" />
                     </td>
@@ -97,8 +108,23 @@ function SuperadminUsersPage() {
               users.map((u) => (
                 <tr key={u.id} className={`hover:bg-muted/30 transition-colors ${u.deleted_at ? 'opacity-60' : ''}`}>
                   <td className="px-4 py-3">
-                    <p className="font-medium">{u.name}</p>
-                    <p className="text-xs text-muted-foreground">{u.email}</p>
+                    <div className="flex items-center gap-3">
+                      {u.profile_picture ? (
+                        <img
+                          src={u.profile_picture}
+                          alt={u.name}
+                          className="size-8 rounded-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <div className="size-8 rounded-full bg-muted flex items-center justify-center shrink-0 text-sm font-semibold text-muted-foreground select-none">
+                          {u.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{u.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     {u.role === 'superadmin'
@@ -107,7 +133,7 @@ function SuperadminUsersPage() {
                     }
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{u.accounts_count ?? '—'}</td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(u.last_login_at)}</td>
+                  <td className="px-4 py-3 text-muted-foreground text-xs">{fmtDate(u.last_login_at)}</td>
                   <td className="px-4 py-3">
                     {u.deleted_at
                       ? <Badge variant="destructive" className="text-xs">Inactive</Badge>
@@ -146,6 +172,7 @@ function SuperadminUsersPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

@@ -58,9 +58,10 @@ interface NavSectionProps {
   label:    string;
   items:    { to: string; label: string; icon: React.ElementType }[];
   isOpen:   boolean;
+  onNavigate?: () => void;
 }
 
-function NavSection({ label, items, isOpen }: NavSectionProps) {
+function NavSection({ label, items, isOpen, onNavigate }: NavSectionProps) {
   return (
     <div>
       {isOpen && (
@@ -74,6 +75,7 @@ function NavSection({ label, items, isOpen }: NavSectionProps) {
           <NavLink
             key={to}
             to={to}
+            onClick={onNavigate}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
@@ -98,6 +100,10 @@ export function Sidebar() {
   const { user, clearAuth } = useAuthStore();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const closeMobile = () => {
+    if (window.innerWidth < 768) close();
+  };
 
   const doLogout = async () => {
     try { await logout(); } catch { /* token may already be invalid */ }
@@ -164,10 +170,10 @@ export function Sidebar() {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2 px-2">
-          <NavSection label="Menu"      items={mainNav}     isOpen={isOpen} />
-          <NavSection label="Planning"  items={planningNav} isOpen={isOpen} />
-          <NavSection label="Insights"  items={insightsNav} isOpen={isOpen} />
-          <NavSection label="Account"   items={settingsNav} isOpen={isOpen} />
+          <NavSection label="Menu"      items={mainNav}     isOpen={isOpen} onNavigate={closeMobile} />
+          <NavSection label="Planning"  items={planningNav} isOpen={isOpen} onNavigate={closeMobile} />
+          <NavSection label="Insights"  items={insightsNav} isOpen={isOpen} onNavigate={closeMobile} />
+          <NavSection label="Account"   items={settingsNav} isOpen={isOpen} onNavigate={closeMobile} />
 
           {user?.role === 'superadmin' && (
             <div>
@@ -179,6 +185,7 @@ export function Sidebar() {
               {!isOpen && <div className="h-4" />}
               <NavLink
                 to="/superadmin"
+                onClick={closeMobile}
                 className={({ isActive }) =>
                   cn(
                     'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
@@ -208,7 +215,7 @@ export function Sidebar() {
             onClick={() => setConfirmOpen(true)}
             className={cn(
               'w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
-              'text-[var(--sidebar-foreground)] hover:bg-destructive/10 hover:text-destructive',
+              'text-[var(--sidebar-foreground)] hover:bg-destructive/10 hover:text-destructive cursor-pointer',
               !isOpen && 'justify-center px-0'
             )}
             title={!isOpen ? 'Logout' : undefined}

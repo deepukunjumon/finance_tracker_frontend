@@ -3,11 +3,11 @@ import { toast } from 'sonner';
 import { Download, FileText } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DateRangePicker } from '@/components/ui/date-picker';
 import { downloadReportCsv, getReportSummary } from '@/api/reports';
 import { useAuthStore } from '@/store/authStore';
-import { formatCurrency, formatDate, getErrorMessage } from '@/lib/utils';
+import { formatCurrency, formatDate, formatTime, getErrorMessage } from '@/lib/utils';
 import type { ReportSummary } from '@/types';
 
 function ReportsPage() {
@@ -52,12 +52,15 @@ function ReportsPage() {
       <div className="rounded-xl border bg-card p-5">
         <div className="flex flex-wrap gap-4 items-end">
           <div className="space-y-1">
-            <Label>From</Label>
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </div>
-          <div className="space-y-1">
-            <Label>To</Label>
-            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <Label>Date Range</Label>
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              onStartChange={setStartDate}
+              onEndChange={setEndDate}
+              startPlaceholder="From"
+              endPlaceholder="To"
+            />
           </div>
           <Button onClick={handleGenerate} disabled={isLoading}>
             {isLoading ? 'Loading...' : 'Generate Report'}
@@ -122,7 +125,7 @@ function ReportsPage() {
                 <div key={t.id} className="flex items-center justify-between px-5 py-3">
                   <div>
                     <p className="text-sm font-medium">{t.category?.name ?? 'Uncategorised'}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(t.date)} · {t.account?.name}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(t.date)}{t.time ? ` · ${formatTime(t.time)}` : ''} · {t.account?.name}</p>
                   </div>
                   <span className={`text-sm font-semibold ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {t.type === 'income' ? '+' : '−'}{formatCurrency(t.amount, currency)}

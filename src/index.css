@@ -84,6 +84,36 @@
   html {
     @apply font-sans;
   }
+
+  /* ── Custom minimal scrollbar ── */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.7 0 0 / 35%);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.5 0 0 / 55%);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: oklch(1 0 0 / 18%);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: oklch(1 0 0 / 35%);
+  }
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.7 0 0 / 35%) transparent;
+  }
+  .dark * {
+    scrollbar-color: oklch(1 0 0 / 18%) transparent;
+  }
 }
 
 @theme inline {

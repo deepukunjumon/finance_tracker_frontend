@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { DateRangePicker } from '@/components/ui/date-picker';
 import { getAuditLogs, type AuditLogFilters } from '@/api/superadmin';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 import type { AuditLog } from '@/types';
@@ -48,23 +49,20 @@ export default function SuperadminAuditLogsPage() {
             onKeyDown={(e) => e.key === 'Enter' && load(1)}
           />
         </div>
-        <Input
-          type="date"
-          className="w-40"
-          onChange={(e) => setFilters((f) => ({ ...f, start_date: e.target.value }))}
-        />
-        <Input
-          type="date"
-          className="w-40"
-          onChange={(e) => setFilters((f) => ({ ...f, end_date: e.target.value }))}
+        <DateRangePicker
+          startDate={filters.start_date}
+          endDate={filters.end_date}
+          onStartChange={(v) => setFilters((f) => ({ ...f, start_date: v }))}
+          onEndChange={(v) => setFilters((f) => ({ ...f, end_date: v }))}
         />
         <Button onClick={() => load(1)}>Filter</Button>
       </div>
 
       {/* Table */}
       <div className="rounded-lg border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-muted-foreground">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
+          <thead className="bg-muted/50 text-muted-foreground sticky top-0 z-10">
             <tr>
               <th className="text-left px-4 py-3 font-medium">Action</th>
               <th className="text-left px-4 py-3 font-medium">User</th>
@@ -105,6 +103,7 @@ export default function SuperadminAuditLogsPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Pagination */}

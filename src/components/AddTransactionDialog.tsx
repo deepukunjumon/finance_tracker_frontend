@@ -12,15 +12,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { createTransaction } from '@/api/transactions';
 import { getAccounts } from '@/api/accounts';
 import { getCategories } from '@/api/categories';
-import { getErrorMessage } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
+import { getCurrencySymbol, getErrorMessage } from '@/lib/utils';
+import { DatePicker } from '@/components/ui/date-picker';
 import type { Account, Category, Transaction } from '@/types';
 
 const schema = z.object({
   account_id:  z.string().min(1, 'Account is required'),
-  category_id: z.string().optional(),
+  category_id: z.string().min(1, 'Category is required'),
   type:        z.enum(['income', 'expense', 'transfer']),
   amount:      z.coerce.number().positive('Must be positive'),
   date:        z.string().min(1, 'Date is required'),
+  time:        z.string().optional(),
   note:        z.string().optional(),
 });
 
@@ -33,6 +36,7 @@ interface AddTransactionDialogProps {
 }
 
 export function AddTransactionDialog({ open, onOpenChange, onCreated }: AddTransactionDialogProps) {
+  const user = useAuthStore((s) => s.user);
   const [accounts,   setAccounts]   = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSaving,   setIsSaving]   = useState(false);
@@ -40,7 +44,11 @@ export function AddTransactionDialog({ open, onOpenChange, onCreated }: AddTrans
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { type: 'expense', date: new Date().toISOString().split('T')[0] },
+    defaultValues: {
+      type: 'expense',
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toTimeString().slice(0, 5),
+    },
   });
 
   const txType = watch('type');
@@ -60,7 +68,7 @@ export function AddTransactionDialog({ open, onOpenChange, onCreated }: AddTrans
   const onSubmit = async (data: FormValues) => {
     setIsSaving(true);
     try {
-      const tx = await createTransaction({ ...data, category_id: data.category_id || undefined });
+      const tx = await createTransaction(data);
       onCreated?.(tx);
       onOpenChange(false);
       reset({ type: 'expense', date: new Date().toISOString().split('T')[0] });
@@ -88,7 +96,7 @@ export function AddTransactionDialog({ open, onOpenChange, onCreated }: AddTrans
                 key={t}
                 type="button"
                 onClick={() => setValue('type', t)}
-                className={`py-1.5 rounded-md text-sm font-medium capitalize transition-all
+                className={`py-1.5 rounded-md text-sm font-medium capitalize transition-all cursor-pointer
                   ${txType === t ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 {t}
@@ -96,44 +104,61 @@ export function AddTransactionDialog({ open, onOpenChange, onCreated }: AddTrans
             ))}
           </div>
 
-          {/* Account */}
-          <div className="space-y-1">
-            <Label>Account</Label>
-            <Select onValueChange={(v) => setValue('account_id', v)}>
-              <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
-              <SelectContent>
-                {accounts.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.account_id && <p className="text-xs text-destructive">{errors.account_id.message}</p>}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Account */}
+            <div className="space-y-1">
+              <Label>Account</Label>
+              <Select onValueChange={(v) => setValue('account_id', v)}>
+                <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+                <SelectContent>
+                  {accounts.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.account_id && <p className="text-xs text-destructive">{errors.account_id.message}</p>}
+            </div>
+
+            {/* Category */}
+            <div className="space-y-1">
+              <Label>Category</Label>
+              <Select onValueChange={(v) => setValue('category_id', v, { shouldValidate: true })}>
+                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectContent>
+                  {filteredCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.category_id && <p className="text-xs text-destructive">{errors.category_id.message}</p>}
+            </div>
           </div>
 
-          {/* Category */}
+          {/* Amount */}
           <div className="space-y-1">
-            <Label>Category <span className="text-muted-foreground">(optional)</span></Label>
-            <Select onValueChange={(v) => setValue('category_id', v)}>
-              <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-              <SelectContent>
-                {filteredCategories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Amount</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                {getCurrencySymbol(user?.currency)}
+              </span>
+              <Input type="number" step="0.01" min="0.01" {...register('amount')} placeholder="0.00" className="pl-8" />
+            </div>
+            {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
           </div>
 
-          {/* Amount + Date */}
+          {/* Date + Time */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>Amount</Label>
-              <Input type="number" step="0.01" min="0.01" {...register('amount')} placeholder="0.00" />
-              {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
+              <Label>Date</Label>
+              <DatePicker
+                value={watch('date')}
+                onChange={(v) => setValue('date', v, { shouldValidate: true })}
+              />
+              {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
             </div>
             <div className="space-y-1">
-              <Label>Date</Label>
-              <Input type="date" {...register('date')} />
-              {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
+              <Label>Time</Label>
+              <Input type="time" {...register('time')} className="w-full" />
             </div>
           </div>
 

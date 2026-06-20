@@ -73,7 +73,7 @@ function NotificationsPage() {
                 <p className="text-xs text-muted-foreground/60 mt-1">{formatDate(n.created_at)}</p>
               </div>
               <button onClick={() => void handleDelete(n.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0">
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0 cursor-pointer">
                 <Trash2 size={14} />
               </button>
             </div>

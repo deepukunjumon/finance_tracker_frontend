@@ -80,7 +80,7 @@ function SuperadminDashboardPage() {
                   <p className="text-sm font-medium">{u.name}</p>
                   <p className="text-xs text-muted-foreground">{u.email}</p>
                 </div>
-                <span className="text-xs text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</span>
+                <span className="text-xs text-muted-foreground">{new Date(u.created_at).toISOString().split('T')[0] }</span>
               </div>
             ))}
           </div>

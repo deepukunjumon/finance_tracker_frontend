@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { deleteRecurring, getRecurring, storeRecurring } from '@/api/recurring';
@@ -148,7 +149,10 @@ function RecurringPage() {
             </div>
             <div className="space-y-1">
               <Label>Starts On</Label>
-              <Input type="date" {...register('starts_at')} />
+              <DatePicker
+                value={watch('starts_at')}
+                onChange={(v) => setValue('starts_at', v, { shouldValidate: true })}
+              />
             </div>
             <Button type="submit" className="w-full" disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Create'}
