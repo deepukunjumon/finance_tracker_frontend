@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { RefreshCw, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { api } from '@/api/axios';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -141,28 +142,24 @@ function SuperadminUsersPage() {
                     }
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <Button
+                    <div className="flex items-center gap-3">
+                      <Switch
                         size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        title={u.deleted_at ? 'Activate' : 'Deactivate'}
-                        onClick={() => u.deleted_at ? void handleRestore(u.id) : void handleToggle(u.id)}
-                      >
-                        {u.deleted_at
-                          ? <ToggleLeft size={16} className="text-muted-foreground" />
-                          : <ToggleRight size={16} className="text-emerald-600" />
-                        }
-                      </Button>
+                        checked={!u.deleted_at}
+                        onCheckedChange={() => u.deleted_at ? void handleRestore(u.id) : void handleToggle(u.id)}
+                        disabled={u.role === 'superadmin'}
+                        className="cursor-pointer data-[state=checked]:bg-emerald-500"
+                        aria-label={u.deleted_at ? 'Activate user' : 'Deactivate user'}
+                      />
                       {u.role !== 'superadmin' && !u.deleted_at && (
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive cursor-pointer"
                           title="Delete user"
                           onClick={() => void handleDelete(u.id)}
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={15} />
                         </Button>
                       )}
                     </div>

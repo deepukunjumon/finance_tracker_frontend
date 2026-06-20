@@ -323,7 +323,7 @@ function SettingsPage() {
             )}
           </div>
           <Button className="mt-4 w-full" onClick={handleSaveAvatar} disabled={isSavingAvatar}>
-            {isSavingAvatar ? 'Saving...' : 'Save Avatar'}
+            {isSavingAvatar ? 'Saving...' : 'Save'}
           </Button>
         </DialogContent>
       </Dialog>

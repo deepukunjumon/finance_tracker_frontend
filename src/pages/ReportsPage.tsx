@@ -14,12 +14,14 @@ function ReportsPage() {
   const user = useAuthStore((s) => s.user);
   const currency = user?.currency ?? 'INR';
   const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
   const [startDate, setStartDate] = useState(
-    new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`
   );
   const [endDate, setEndDate] = useState(
-    new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+    localDate(now)
   );
   const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
