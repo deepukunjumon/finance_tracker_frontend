@@ -50,7 +50,7 @@ function AdjustBalanceDialog({ account, currency, onClose, onAdjusted }: AdjustB
       const updated = await adjustBalance(account.id, num);
       onAdjusted(updated);
       onClose();
-      toast.success('Balance updated. Adjustment transaction created.');
+      toast.success('Balance updated.');
     } catch (e) { toast.error(getErrorMessage(e)); }
     finally { setSaving(false); }
   };
