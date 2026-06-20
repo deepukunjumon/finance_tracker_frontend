@@ -148,15 +148,8 @@ function SettingsPage() {
 
       {/* Profile header card */}
       <div className="rounded-xl border bg-card overflow-hidden">
-        <div className="h-24 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 dark:from-slate-700 dark:via-slate-800 dark:to-slate-900 relative overflow-hidden">
-          <div
-            className="absolute inset-0 opacity-[0.05]"
-            style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h20v20H0z\' fill=\'none\'/%3E%3Cpath d=\'M0 10h20M10 0v20\' stroke=\'%23fff\' stroke-width=\'.5\'/%3E%3C/svg%3E")' }}
-          />
-          <div className="pointer-events-none absolute -top-6 -right-6 h-28 w-28 rounded-full bg-white/[0.06] blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-4 -left-4 h-20 w-20 rounded-full bg-white/[0.06] blur-2xl" />
-        </div>
-        <div className="px-6 pb-6 -mt-12">
+        <div className="h-24 bg-muted" />
+        <div className="px-6 pb-6 -mt-12 relative z-10">
           <div className="flex items-end gap-4">
             <div className="relative">
               <Avatar className="h-20 w-20 border-4 border-card shadow-md">
