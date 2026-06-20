@@ -89,14 +89,19 @@ function StatCard({
   value,
   icon,
   color,
+  onClick,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
   color: string;
+  onClick?: () => void;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-3 sm:p-5 flex items-center gap-2.5 sm:gap-4">
+    <div
+      className={`rounded-xl border bg-card p-3 sm:p-5 flex items-center gap-2.5 sm:gap-4 ${onClick ? 'cursor-pointer hover:shadow-sm transition-shadow' : ''}`}
+      onClick={onClick}
+    >
       <div
         className={`flex size-8 sm:size-10 items-center justify-center rounded-lg shrink-0 ${color}`}
       >
@@ -326,12 +331,14 @@ function DashboardPage() {
           value={formatCurrency(stats?.monthly_income ?? 0, currency)}
           icon={<ArrowDownLeft size={18} className="text-emerald-600" />}
           color="bg-emerald-50 dark:bg-emerald-950"
+          onClick={() => navigate('/transactions?type=income')}
         />
         <StatCard
           label="Monthly Expense"
           value={formatCurrency(stats?.monthly_expense ?? 0, currency)}
           icon={<ArrowUpRight size={18} className="text-rose-600" />}
           color="bg-rose-50 dark:bg-rose-950"
+          onClick={() => navigate('/transactions?type=expense')}
         />
       </div>
 

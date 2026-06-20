@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Plus, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -43,6 +44,7 @@ type FormValues = z.infer<typeof schema>;
 
 function TransactionsPage() {
   const user = useAuthStore((s) => s.user);
+  const [searchParams, setSearchParams] = useSearchParams();
   const currency = user?.currency ?? 'INR';
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -50,6 +52,7 @@ function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [filterType, setFilterType] = useState(searchParams.get('type') ?? '');
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema) as any,
@@ -61,17 +64,21 @@ function TransactionsPage() {
   });
   const txType = watch('type');
 
+  const loadTransactions = async (typeFilter?: string) => {
+    setIsLoading(true);
+    try {
+      const filters = typeFilter ? { type: typeFilter as any } : undefined;
+      const [txs, accs, cats] = await Promise.all([getTransactions(filters), getAccounts(), getCategories()]);
+      setTransactions(Array.isArray(txs) ? txs : (txs as any).data ?? []);
+      setAccounts(accs);
+      setCategories(cats);
+    } catch (e) { toast.error(getErrorMessage(e)); }
+    finally { setIsLoading(false); }
+  };
+
   useEffect(() => {
-    void (async () => {
-      try {
-        const [txs, accs, cats] = await Promise.all([getTransactions(), getAccounts(), getCategories()]);
-        setTransactions(Array.isArray(txs) ? txs : (txs as any).data ?? []);
-        setAccounts(accs);
-        setCategories(cats);
-      } catch (e) { toast.error(getErrorMessage(e)); }
-      finally { setIsLoading(false); }
-    })();
-  }, []);
+    void loadTransactions(filterType || undefined);
+  }, [filterType]);
 
   const onSubmit = async (data: FormValues) => {
     setIsSaving(true);
@@ -96,7 +103,20 @@ function TransactionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Transactions</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Transactions</h1>
+          {filterType && (
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Showing <span className="font-medium capitalize text-foreground">{filterType}</span> transactions
+              <button
+                onClick={() => { setFilterType(''); setSearchParams({}); }}
+                className="ml-2 text-xs text-primary hover:underline cursor-pointer"
+              >
+                Clear filter
+              </button>
+            </p>
+          )}
+        </div>
         <Button className="gap-2" onClick={() => setDialogOpen(true)}>
           <Plus size={16} /> Add Transaction
         </Button>
