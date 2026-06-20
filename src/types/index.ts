@@ -145,6 +145,19 @@ export interface AuditLog {
   created_at: string;
 }
 
+export interface EmailLog {
+  id: string;
+  recipient: string;
+  subject: string;
+  template: string | null;
+  channel: string;
+  status: 'sent' | 'failed';
+  error_message: string | null;
+  metadata: Record<string, unknown> | null;
+  sent_at: string;
+  created_at: string;
+}
+
 export interface DashboardStats {
   total_balance: number;
   monthly_income: number;

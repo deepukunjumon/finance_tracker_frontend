@@ -25,6 +25,7 @@ import SuperadminCurrenciesPage from '@/pages/superadmin/SuperadminCurrenciesPag
 import SuperadminAccountTypesPage from '@/pages/superadmin/SuperadminAccountTypesPage';
 import SuperadminCategoriesPage from '@/pages/superadmin/SuperadminCategoriesPage';
 import SuperadminAuditLogsPage from '@/pages/superadmin/SuperadminAuditLogsPage';
+import SuperadminEmailLogsPage from '@/pages/superadmin/SuperadminEmailLogsPage';
 import SuperadminAppSettingsPage from '@/pages/superadmin/SuperadminAppSettingsPage';
 
 function ProtectedAppPage({ children }: { children: React.ReactNode }) {
@@ -81,6 +82,7 @@ function App() {
         <Route path="/superadmin/account-types"   element={<ProtectedAdminPage><SuperadminAccountTypesPage /></ProtectedAdminPage>} />
         <Route path="/superadmin/categories"      element={<ProtectedAdminPage><SuperadminCategoriesPage /></ProtectedAdminPage>} />
         <Route path="/superadmin/audit-logs"      element={<ProtectedAdminPage><SuperadminAuditLogsPage /></ProtectedAdminPage>} />
+        <Route path="/superadmin/email-logs"     element={<ProtectedAdminPage><SuperadminEmailLogsPage /></ProtectedAdminPage>} />
         <Route path="/superadmin/settings"        element={<ProtectedAdminPage><SuperadminAppSettingsPage /></ProtectedAdminPage>} />
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

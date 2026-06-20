@@ -1,7 +1,11 @@
 import {
+  ChevronDown,
   ChevronLeft,
   FileText,
   LayoutDashboard,
+  Mail,
+  MessageSquare,
+  ScrollText,
   Settings,
   Shield,
   Tag,
@@ -32,10 +36,15 @@ const adminNav = [
   { to: '/superadmin',               label: 'Dashboard',    icon: LayoutDashboard, end: true },
   { to: '/superadmin/users',         label: 'Users',        icon: Users },
   { to: '/superadmin/currencies',    label: 'Currencies',   icon: TrendingUp },
-  { to: '/superadmin/account-types', label: 'Acct Types',   icon: Wallet },
+  { to: '/superadmin/account-types', label: 'Account Types',   icon: Wallet },
   { to: '/superadmin/categories',    label: 'Categories',   icon: Tag },
-  { to: '/superadmin/audit-logs',    label: 'Audit Logs',   icon: FileText },
   { to: '/superadmin/settings',      label: 'App Settings', icon: Settings },
+];
+
+const logsNav = [
+  { to: '/superadmin/email-logs',    label: 'Email Logs',   icon: Mail },
+  { to: '/superadmin/sms-logs',      label: 'SMS Logs',     icon: MessageSquare, disabled: true },
+  { to: '/superadmin/audit-logs',    label: 'Audit Logs',   icon: FileText },
 ];
 
 interface SuperadminSidebarProps {
@@ -46,6 +55,7 @@ interface SuperadminSidebarProps {
 export function SuperadminSidebar({ mobileOpen, onMobileClose }: SuperadminSidebarProps) {
   const [collapsed,   setCollapsed]   = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [logsOpen,    setLogsOpen]    = useState(false);
   const { user, clearAuth } = useAuthStore();
   const navigate = useNavigate();
 
@@ -140,27 +150,84 @@ export function SuperadminSidebar({ mobileOpen, onMobileClose }: SuperadminSideb
         )}
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-          {adminNav.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={onMobileClose}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
-                  'text-[var(--sidebar-foreground)] hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400',
-                  isActive && 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold',
-                  collapsed && !mobileOpen && 'md:justify-center md:px-0'
-                )
-              }
-              title={collapsed && !mobileOpen ? label : undefined}
+        <nav className="flex-1 overflow-y-auto py-3 px-2">
+          <div className="space-y-0.5">
+            {adminNav.map(({ to, label, icon: Icon, end }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                onClick={onMobileClose}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
+                    'text-[var(--sidebar-foreground)] hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400',
+                    isActive && 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold',
+                    collapsed && !mobileOpen && 'md:justify-center md:px-0'
+                  )
+                }
+                title={collapsed && !mobileOpen ? label : undefined}
+              >
+                <Icon size={18} className="shrink-0" />
+                {(!collapsed || mobileOpen) && <span className="truncate">{label}</span>}
+              </NavLink>
+            ))}
+          </div>
+
+          {/* Logs dropdown */}
+          <div className="mt-1">
+            <button
+              type="button"
+              onClick={() => setLogsOpen((v) => !v)}
+              className={cn(
+                'w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer',
+                'text-[var(--sidebar-foreground)] hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400',
+                logsOpen && 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                collapsed && !mobileOpen && 'md:justify-center md:px-0'
+              )}
+              title={collapsed && !mobileOpen ? 'Logs' : undefined}
             >
-              <Icon size={18} className="shrink-0" />
-              {(!collapsed || mobileOpen) && <span className="truncate">{label}</span>}
-            </NavLink>
-          ))}
+              <ScrollText size={18} className="shrink-0" />
+              {(!collapsed || mobileOpen) && (
+                <>
+                  <span className="truncate flex-1 text-left">Logs</span>
+                  <ChevronDown size={14} className={cn('shrink-0 transition-transform', logsOpen && 'rotate-180')} />
+                </>
+              )}
+            </button>
+
+            {logsOpen && (!collapsed || mobileOpen) && (
+              <div className="ml-4 pl-3 border-l border-amber-500/20 mt-0.5 space-y-0.5">
+                {logsNav.map(({ to, label, icon: Icon, disabled }) => (
+                  disabled ? (
+                    <div
+                      key={to}
+                      className="flex items-center gap-3 px-2.5 py-1.5 rounded-md text-sm font-medium opacity-40 cursor-not-allowed text-[var(--sidebar-foreground)]"
+                    >
+                      <Icon size={16} className="shrink-0" />
+                      <span className="truncate">{label}</span>
+                    </div>
+                  ) : (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      onClick={onMobileClose}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center gap-3 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors',
+                          'text-[var(--sidebar-foreground)] hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400',
+                          isActive && 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold',
+                        )
+                      }
+                    >
+                      <Icon size={16} className="shrink-0" />
+                      <span className="truncate">{label}</span>
+                    </NavLink>
+                  )
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* User + logout */}
