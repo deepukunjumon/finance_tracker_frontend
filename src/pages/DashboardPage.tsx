@@ -381,6 +381,7 @@ function DashboardPage() {
           onChange={handleMonthChange}
           placeholder="This month"
           clearable
+          disableFuture
           className="h-8 w-40 text-xs"
         />
       </div>

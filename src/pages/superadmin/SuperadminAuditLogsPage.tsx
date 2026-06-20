@@ -54,6 +54,7 @@ export default function SuperadminAuditLogsPage() {
           endDate={filters.end_date}
           onStartChange={(v) => setFilters((f) => ({ ...f, start_date: v }))}
           onEndChange={(v) => setFilters((f) => ({ ...f, end_date: v }))}
+          disableFuture
         />
         <Button onClick={() => load(1)}>Filter</Button>
       </div>

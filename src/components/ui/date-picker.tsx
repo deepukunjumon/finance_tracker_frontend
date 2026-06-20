@@ -1,7 +1,7 @@
 import { useState, forwardRef } from 'react';
 import {
   format, parse, isValid, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
-  addDays, addMonths, subMonths, addYears, subYears, isSameDay, isSameMonth, getDay,
+  addDays, addMonths, subMonths, addYears, subYears, isSameDay, isSameMonth, isAfter, startOfDay,
 } from 'date-fns';
 import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
@@ -68,9 +68,11 @@ type CalView = 'days' | 'months' | 'years';
 function CalendarPanel({
   selected,
   onSelect,
+  maxDate,
 }: {
   selected?: Date;
   onSelect: (d: Date) => void;
+  maxDate?: Date;
 }) {
   const today = new Date();
   const [view, setView] = useState<CalView>('days');
@@ -79,6 +81,13 @@ function CalendarPanel({
 
   const year  = cursor.getFullYear();
   const month = cursor.getMonth();
+
+  const maxDay = maxDate ? startOfDay(maxDate) : undefined;
+  const isDayDisabled = (d: Date) => maxDay ? isAfter(startOfDay(d), maxDay) : false;
+  const isMonthDisabled = (y: number, m: number) => maxDay ? new Date(y, m, 1) > endOfMonth(maxDay) : false;
+  const isYearDisabled = (y: number) => maxDay ? y > maxDay.getFullYear() : false;
+  const canGoNextMonth = !maxDay || new Date(year, month + 1, 1) <= endOfMonth(maxDay);
+  const canGoNextYear = !maxDay || year + 1 <= maxDay.getFullYear();
 
   /* ── Days view ── */
   if (view === 'days') {
@@ -103,8 +112,12 @@ function CalendarPanel({
           </button>
           <button
             type="button"
-            onClick={() => setCursor(addMonths(cursor, 1))}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => canGoNextMonth && setCursor(addMonths(cursor, 1))}
+            disabled={!canGoNextMonth}
+            className={cn(
+              'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
+              canGoNextMonth ? 'text-muted-foreground hover:bg-accent cursor-pointer' : 'text-muted-foreground/30 cursor-not-allowed',
+            )}
           >
             <ChevronRight size={14} />
           </button>
@@ -122,20 +135,23 @@ function CalendarPanel({
         {/* Day cells */}
         <div className="grid grid-cols-7 gap-y-0.5">
           {days.map((d, i) => {
-            const isToday    = isSameDay(d, today);
-            const isSel      = selected ? isSameDay(d, selected) : false;
+            const isToday     = isSameDay(d, today);
+            const isSel       = selected ? isSameDay(d, selected) : false;
             const isThisMonth = isSameMonth(d, cursor);
+            const disabled    = isDayDisabled(d);
             return (
               <button
                 key={i}
                 type="button"
-                onClick={() => onSelect(d)}
+                disabled={disabled}
+                onClick={() => !disabled && onSelect(d)}
                 className={cn(
-                  'h-8 w-full flex items-center justify-center rounded-md text-sm transition-colors cursor-pointer',
-                  !isThisMonth && 'text-muted-foreground/40',
-                  isThisMonth && !isSel && !isToday && 'hover:bg-accent hover:text-accent-foreground',
-                  isToday && !isSel && 'bg-accent text-accent-foreground font-semibold',
-                  isSel && 'bg-primary text-primary-foreground font-semibold hover:bg-primary/90',
+                  'h-8 w-full flex items-center justify-center rounded-md text-sm transition-colors',
+                  disabled && 'text-muted-foreground/25 cursor-not-allowed',
+                  !disabled && !isThisMonth && 'text-muted-foreground/40 cursor-pointer',
+                  !disabled && isThisMonth && !isSel && !isToday && 'hover:bg-accent hover:text-accent-foreground cursor-pointer',
+                  !disabled && isToday && !isSel && 'bg-accent text-accent-foreground font-semibold cursor-pointer',
+                  isSel && 'bg-primary text-primary-foreground font-semibold hover:bg-primary/90 cursor-pointer',
                 )}
               >
                 {d.getDate()}
@@ -168,29 +184,38 @@ function CalendarPanel({
           </button>
           <button
             type="button"
-            onClick={() => setCursor(addYears(cursor, 1))}
-            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => canGoNextYear && setCursor(addYears(cursor, 1))}
+            disabled={!canGoNextYear}
+            className={cn(
+              'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
+              canGoNextYear ? 'text-muted-foreground hover:bg-accent cursor-pointer' : 'text-muted-foreground/30 cursor-not-allowed',
+            )}
           >
             <ChevronRight size={14} />
           </button>
         </div>
 
         <div className="grid grid-cols-3 gap-1">
-          {MONTH_SHORT.map((m, i) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => { setCursor(new Date(year, i, 1)); setView('days'); }}
-              className={cn(
-                'rounded-md py-2 text-xs font-medium transition-colors cursor-pointer',
-                i === month
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-accent hover:text-accent-foreground text-foreground',
-              )}
-            >
-              {m}
-            </button>
-          ))}
+          {MONTH_SHORT.map((m, i) => {
+            const disabled = isMonthDisabled(year, i);
+            return (
+              <button
+                key={m}
+                type="button"
+                disabled={disabled}
+                onClick={() => !disabled && (() => { setCursor(new Date(year, i, 1)); setView('days'); })()}
+                className={cn(
+                  'rounded-md py-2 text-xs font-medium transition-colors',
+                  disabled && 'text-muted-foreground/25 cursor-not-allowed',
+                  !disabled && i === month
+                    ? 'bg-primary text-primary-foreground cursor-pointer'
+                    : !disabled ? 'hover:bg-accent hover:text-accent-foreground text-foreground cursor-pointer' : '',
+                )}
+              >
+                {m}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -219,21 +244,26 @@ function CalendarPanel({
       </div>
 
       <div className="grid grid-cols-3 gap-1">
-        {years.map((y) => (
-          <button
-            key={y}
-            type="button"
-            onClick={() => { setCursor(new Date(y, month, 1)); setView('months'); }}
-            className={cn(
-              'rounded-md py-2 text-xs font-medium transition-colors cursor-pointer',
-              y === year
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-accent hover:text-accent-foreground text-foreground',
-            )}
-          >
-            {y}
-          </button>
-        ))}
+        {years.map((y) => {
+          const disabled = isYearDisabled(y);
+          return (
+            <button
+              key={y}
+              type="button"
+              disabled={disabled}
+              onClick={() => !disabled && (() => { setCursor(new Date(y, month, 1)); setView('months'); })()}
+              className={cn(
+                'rounded-md py-2 text-xs font-medium transition-colors',
+                disabled && 'text-muted-foreground/25 cursor-not-allowed',
+                !disabled && y === year
+                  ? 'bg-primary text-primary-foreground cursor-pointer'
+                  : !disabled ? 'hover:bg-accent hover:text-accent-foreground text-foreground cursor-pointer' : '',
+              )}
+            >
+              {y}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -243,12 +273,14 @@ function CalendarPanel({
    DatePicker  — value/onChange use "yyyy-MM-dd" string
    ──────────────────────────────────────────────────────────── */
 interface DatePickerProps {
-  value?:       string;
-  onChange?:    (value: string) => void;
-  placeholder?: string;
-  disabled?:    boolean;
-  clearable?:   boolean;
-  className?:   string;
+  value?:         string;
+  onChange?:      (value: string) => void;
+  placeholder?:   string;
+  disabled?:      boolean;
+  clearable?:     boolean;
+  disableFuture?: boolean;
+  maxDate?:       Date;
+  className?:     string;
 }
 
 export function DatePicker({
@@ -257,6 +289,8 @@ export function DatePicker({
   placeholder = 'Select date',
   disabled,
   clearable = false,
+  disableFuture = false,
+  maxDate,
   className,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
@@ -264,6 +298,8 @@ export function DatePicker({
   const parsed  = value ? parse(value, 'yyyy-MM-dd', new Date()) : undefined;
   const isOk    = parsed && isValid(parsed);
   const label   = isOk ? format(parsed!, 'd MMM yyyy') : undefined;
+
+  const resolvedMax = maxDate ?? (disableFuture ? new Date() : undefined);
 
   const handleSelect = (d: Date) => {
     onChange?.(format(d, 'yyyy-MM-dd'));
@@ -284,7 +320,7 @@ export function DatePicker({
         />
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <CalendarPanel selected={isOk ? parsed : undefined} onSelect={handleSelect} />
+        <CalendarPanel selected={isOk ? parsed : undefined} onSelect={handleSelect} maxDate={resolvedMax} />
       </PopoverContent>
     </Popover>
   );
@@ -300,6 +336,7 @@ interface DateRangePickerProps {
   onEndChange?:      (v: string) => void;
   startPlaceholder?: string;
   endPlaceholder?:   string;
+  disableFuture?:    boolean;
   className?:        string;
 }
 
@@ -310,6 +347,7 @@ export function DateRangePicker({
   onEndChange,
   startPlaceholder = 'From',
   endPlaceholder   = 'To',
+  disableFuture    = false,
   className,
 }: DateRangePickerProps) {
   return (
@@ -318,6 +356,7 @@ export function DateRangePicker({
         value={startDate}
         onChange={onStartChange}
         placeholder={startPlaceholder}
+        disableFuture={disableFuture}
         clearable
       />
       <span className="text-muted-foreground text-xs shrink-0">–</span>
@@ -325,6 +364,7 @@ export function DateRangePicker({
         value={endDate}
         onChange={onEndChange}
         placeholder={endPlaceholder}
+        disableFuture={disableFuture}
         clearable
       />
     </div>
@@ -335,12 +375,13 @@ export function DateRangePicker({
    MonthPicker  — value/onChange use "yyyy-MM" string
    ──────────────────────────────────────────────────────────── */
 interface MonthPickerProps {
-  value?:       string;
-  onChange?:    (value: string) => void;
-  placeholder?: string;
-  disabled?:    boolean;
-  clearable?:   boolean;
-  className?:   string;
+  value?:         string;
+  onChange?:      (value: string) => void;
+  placeholder?:   string;
+  disabled?:      boolean;
+  clearable?:     boolean;
+  disableFuture?: boolean;
+  className?:     string;
 }
 
 export function MonthPicker({
@@ -349,6 +390,7 @@ export function MonthPicker({
   placeholder = 'Select month',
   disabled,
   clearable = false,
+  disableFuture = false,
   className,
 }: MonthPickerProps) {
   const [open, setOpen] = useState(false);
@@ -362,9 +404,17 @@ export function MonthPicker({
   const [yearMode, setYearMode] = useState(false);
   const [yearPage, setYearPage] = useState(() => Math.floor(viewYear / 12) * 12);
 
+  const now = new Date();
+  const maxYear  = now.getFullYear();
+  const maxMonth = now.getMonth();
+
   const [selYear, selMonthStr] = value ? value.split('-') : [null, null];
   const selMonth = selMonthStr ? parseInt(selMonthStr, 10) : null;
   const label = (selYear && selMonth) ? `${MONTH_SHORT[selMonth - 1]} ${selYear}` : undefined;
+
+  const isMonthDisabledFn = (y: number, m: number) => disableFuture && (y > maxYear || (y === maxYear && m > maxMonth));
+  const isYearDisabledFn  = (y: number) => disableFuture && y > maxYear;
+  const canNextYear       = !disableFuture || viewYear < maxYear;
 
   const select = (y: number, m: number) => {
     onChange?.(`${y}-${String(m).padStart(2, '0')}`);
@@ -400,8 +450,13 @@ export function MonthPicker({
                 className="text-sm font-semibold hover:text-primary transition-colors cursor-pointer px-2 py-0.5 rounded hover:bg-accent">
                 {viewYear}
               </button>
-              <button type="button" onClick={() => setViewYear((y) => y + 1)}
-                className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-accent transition-colors cursor-pointer">
+              <button type="button"
+                disabled={!canNextYear}
+                onClick={() => canNextYear && setViewYear((y) => y + 1)}
+                className={cn(
+                  'h-7 w-7 rounded-md flex items-center justify-center transition-colors',
+                  canNextYear ? 'text-muted-foreground hover:bg-accent cursor-pointer' : 'text-muted-foreground/30 cursor-not-allowed',
+                )}>
                 <ChevronRight size={14} />
               </button>
             </div>
@@ -409,11 +464,15 @@ export function MonthPicker({
             <div className="grid grid-cols-3 gap-1">
               {MONTH_SHORT.map((m, i) => {
                 const isSel = selYear === String(viewYear) && selMonth === i + 1;
+                const disabled = isMonthDisabledFn(viewYear, i);
                 return (
-                  <button key={m} type="button" onClick={() => select(viewYear, i + 1)}
+                  <button key={m} type="button" disabled={disabled}
+                    onClick={() => !disabled && select(viewYear, i + 1)}
                     className={cn(
-                      'rounded-md py-2 text-xs font-medium transition-colors cursor-pointer',
-                      isSel ? 'bg-primary text-primary-foreground' : 'hover:bg-accent hover:text-accent-foreground text-foreground',
+                      'rounded-md py-2 text-xs font-medium transition-colors',
+                      disabled && 'text-muted-foreground/25 cursor-not-allowed',
+                      !disabled && isSel ? 'bg-primary text-primary-foreground cursor-pointer'
+                        : !disabled ? 'hover:bg-accent hover:text-accent-foreground text-foreground cursor-pointer' : '',
                     )}>
                     {m}
                   </button>
@@ -436,15 +495,21 @@ export function MonthPicker({
               </button>
             </div>
             <div className="grid grid-cols-3 gap-1">
-              {years.map((y) => (
-                <button key={y} type="button" onClick={() => { setViewYear(y); setYearMode(false); }}
-                  className={cn(
-                    'rounded-md py-2 text-xs font-medium transition-colors cursor-pointer',
-                    y === viewYear ? 'bg-primary text-primary-foreground' : 'hover:bg-accent hover:text-accent-foreground text-foreground',
-                  )}>
-                  {y}
-                </button>
-              ))}
+              {years.map((y) => {
+                const disabled = isYearDisabledFn(y);
+                return (
+                  <button key={y} type="button" disabled={disabled}
+                    onClick={() => !disabled && (() => { setViewYear(y); setYearMode(false); })()}
+                    className={cn(
+                      'rounded-md py-2 text-xs font-medium transition-colors',
+                      disabled && 'text-muted-foreground/25 cursor-not-allowed',
+                      !disabled && y === viewYear ? 'bg-primary text-primary-foreground cursor-pointer'
+                        : !disabled ? 'hover:bg-accent hover:text-accent-foreground text-foreground cursor-pointer' : '',
+                    )}>
+                    {y}
+                  </button>
+                );
+              })}
             </div>
           </>
         )}

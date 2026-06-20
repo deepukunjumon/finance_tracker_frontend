@@ -153,6 +153,7 @@ export function AddTransactionDialog({ open, onOpenChange, onCreated }: AddTrans
               <DatePicker
                 value={watch('date')}
                 onChange={(v) => setValue('date', v, { shouldValidate: true })}
+                disableFuture
               />
               {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
             </div>

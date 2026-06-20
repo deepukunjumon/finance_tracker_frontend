@@ -73,6 +73,7 @@ function ReportsPage() {
               onEndChange={setEndDate}
               startPlaceholder="From"
               endPlaceholder="To"
+              disableFuture
             />
           </div>
           <Button onClick={handleGenerate} disabled={isLoading}>
