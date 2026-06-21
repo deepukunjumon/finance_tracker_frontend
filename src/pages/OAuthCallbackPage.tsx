@@ -1,30 +1,31 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useAuthStore } from '@/store/authStore';
 
 function OAuthCallbackPage() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   useEffect(() => {
-    const error = searchParams.get('error');
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
 
+    const error = params.get('error');
     if (error) {
       toast.error(error);
       navigate('/login', { replace: true });
       return;
     }
 
-    const token                = searchParams.get('token');
-    const id                   = searchParams.get('id');
-    const name                 = searchParams.get('name');
-    const email                = searchParams.get('email');
-    const currency             = searchParams.get('currency') ?? 'INR';
-    const onboarding_completed = searchParams.get('onboarding_completed') === '1';
-    const role                 = (searchParams.get('role') as 'user' | 'superadmin') ?? 'user';
+    const token                = params.get('token');
+    const id                   = params.get('id');
+    const name                 = params.get('name');
+    const email                = params.get('email');
+    const currency             = params.get('currency') ?? 'INR';
+    const onboarding_completed = params.get('onboarding_completed') === '1';
+    const role                 = (params.get('role') as 'user' | 'superadmin') ?? 'user';
 
     if (!token || !id || !name || !email) {
       toast.error('Authentication failed. Please try again.');
@@ -32,10 +33,11 @@ function OAuthCallbackPage() {
       return;
     }
 
+    window.history.replaceState(null, '', window.location.pathname);
+
     setAuth({ user: { id, name, email, mobile: null, currency, onboarding_completed, role, profile_picture: null }, token });
     toast.success('Logged in successfully.');
     navigate(onboarding_completed ? '/dashboard' : '/onboarding', { replace: true });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

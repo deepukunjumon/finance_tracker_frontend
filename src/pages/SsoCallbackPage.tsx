@@ -1,14 +1,16 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 
 export default function SsoCallbackPage() {
-  const [params] = useSearchParams();
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+
     const token = params.get('token');
     const error = params.get('error');
 
@@ -24,7 +26,8 @@ export default function SsoCallbackPage() {
       return;
     }
 
-    // Fetch the authenticated user using the token
+    window.history.replaceState(null, '', window.location.pathname);
+
     import('@/api/axios').then(({ api }) => {
       api.get('/profile', { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => {
