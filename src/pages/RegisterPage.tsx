@@ -335,7 +335,7 @@ function RegisterPage() {
                   <FormItem>
                     <FormLabel>Full name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Jane Doe" autoComplete="name" {...field} />
+                      <Input placeholder="" autoComplete="name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -351,7 +351,7 @@ function RegisterPage() {
                       <Input
                         type="tel"
                         inputMode="numeric"
-                        placeholder="9876543210"
+                        placeholder=""
                         autoComplete="tel"
                         {...field}
                       />
@@ -367,7 +367,7 @@ function RegisterPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" autoComplete="email" {...field} />
+                      <Input type="email" placeholder="" autoComplete="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -381,7 +381,7 @@ function RegisterPage() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <PasswordInput
-                        placeholder="••••••••"
+                        placeholder=""
                         autoComplete="new-password"
                         {...field}
                       />
@@ -398,7 +398,7 @@ function RegisterPage() {
                     <FormLabel>Confirm password</FormLabel>
                     <FormControl>
                       <PasswordInput
-                        placeholder="••••••••"
+                        placeholder=""
                         autoComplete="new-password"
                         {...field}
                       />

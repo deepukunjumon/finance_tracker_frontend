@@ -274,7 +274,7 @@ function LoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" autoComplete="email" {...field} />
+                      <Input type="email" placeholder="" autoComplete="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -288,7 +288,7 @@ function LoginPage() {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <PasswordInput
-                        placeholder="••••••••"
+                        placeholder=""
                         autoComplete="current-password"
                         {...field}
                       />
