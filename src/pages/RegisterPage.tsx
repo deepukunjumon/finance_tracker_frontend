@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
+import { Moon, Sun } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useThemeStore } from '@/store/themeStore';
 import { getErrorMessage } from '@/lib/utils';
 
 const registerSchema = z
@@ -215,6 +217,7 @@ function SavingsIllustration() {
 
 function RegisterPage() {
   const { register } = useAuth();
+  const { theme, toggleTheme } = useThemeStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -284,7 +287,15 @@ function RegisterPage() {
       </div>
 
       {/* ── Right panel: form ── */}
-      <div className="flex w-full flex-col items-center justify-center overflow-y-auto bg-background px-6 py-12 lg:w-[55%]">
+      <div className="flex w-full flex-col items-center justify-center overflow-y-auto bg-background px-6 py-12 lg:w-[55%] relative">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         {/* Mobile-only logo */}
         <div className="mb-8 flex items-center gap-3 lg:hidden">
           <div className="flex size-12 items-center justify-center rounded-xl bg-foreground/5">

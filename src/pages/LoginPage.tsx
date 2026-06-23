@@ -9,9 +9,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
 import { getErrorMessage } from '@/lib/utils';
-import { Shield } from 'lucide-react';
+import { Moon, Shield, Sun } from 'lucide-react';
 import { getPublicSettings } from '@/api/settings';
 import { PasswordInput } from '@/components/ui/password-input';
+import { useThemeStore } from '@/store/themeStore';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
@@ -168,6 +169,7 @@ function FinanceIllustration() {
 
 function LoginPage() {
   const { login } = useAuth();
+  const { theme, toggleTheme } = useThemeStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [ssoEnabled,  setSsoEnabled]  = useState(false);
@@ -246,7 +248,15 @@ function LoginPage() {
       </div>
 
       {/* ── Right panel: form ── */}
-      <div className="flex w-full flex-col items-center justify-center overflow-y-auto bg-background px-6 py-12 lg:w-[55%]">
+      <div className="flex w-full flex-col items-center justify-center overflow-y-auto bg-background px-6 py-12 lg:w-[55%] relative">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         {/* Mobile-only logo */}
         <div className="mb-8 flex items-center gap-3 lg:hidden">
           <div className="flex size-12 items-center justify-center rounded-xl bg-foreground/5">
