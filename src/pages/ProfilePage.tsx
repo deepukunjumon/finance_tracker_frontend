@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Camera, ChevronDown, KeyRound, Mail, Pencil, Phone, Shield, Trash2, User as UserIcon } from 'lucide-react';
@@ -11,7 +11,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { deactivateAccount, updatePassword, updateProfile } from '@/api/profile';
+import { deactivateAccount, getProfile, updatePassword, updateProfile } from '@/api/profile';
 import { useAuthStore } from '@/store/authStore';
 import { getErrorMessage } from '@/lib/utils';
 
@@ -58,6 +58,14 @@ function ProfilePage() {
   const [isDeactivating, setIsDeactivating] = useState(false);
 
   const initials = user?.name?.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() ?? 'U';
+
+  useEffect(() => {
+    void getProfile().then((fresh) => {
+      updateUser(fresh);
+      setName(fresh.name ?? '');
+      setMobile(fresh.mobile ?? '');
+    }).catch(() => {});
+  }, []);
 
   const handleCancelEdit = () => {
     setName(user?.name ?? '');
@@ -302,10 +310,10 @@ function ProfilePage() {
       <Dialog open={cropDialogOpen} onOpenChange={setCropDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>Crop Profile Picture</DialogTitle></DialogHeader>
-          <div className="mt-3 flex justify-center">
+          <div className="mt-3 flex justify-center overflow-hidden">
             {imgSrc && (
               <ReactCrop crop={crop} onChange={(_, pc) => setCrop(pc)} onComplete={(c) => setCompletedCrop(c)} aspect={1} circularCrop>
-                <img ref={imgRef} src={imgSrc} alt="Crop preview" onLoad={onImageLoad} className="max-h-[400px]" />
+                <img ref={imgRef} src={imgSrc} alt="Crop preview" onLoad={onImageLoad} className="max-h-[60vh] max-w-full object-contain" />
               </ReactCrop>
             )}
           </div>
