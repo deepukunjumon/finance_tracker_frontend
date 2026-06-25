@@ -46,11 +46,11 @@ export function SuperadminLayout({ children }: SuperadminLayoutProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden shrink-0"
+            className="md:hidden shrink-0 h-10 w-10"
             onClick={() => setMobileOpen(true)}
             aria-label="Open menu"
           >
-            <Menu size={20} />
+            <Menu size={24} />
           </Button>
 
           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 shrink-0">

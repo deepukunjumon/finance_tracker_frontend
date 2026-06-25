@@ -167,7 +167,7 @@ export interface DashboardStats {
   recent_transactions: Transaction[];
   monthly_trend: { month: string; type: TransactionType; total: number }[];
   expense_by_category: { category_id: string; total: number; category?: Category }[];
-  all_by_category: { category_id: string; type: TransactionType; total: number; category?: Category }[];
+  income_by_category: { category_id: string; total: number; category?: Category }[];
 }
 
 export interface ReportSummary {

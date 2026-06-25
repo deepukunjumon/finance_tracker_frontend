@@ -44,20 +44,20 @@ export function Navbar() {
       )}
     >
       {/* Hamburger — mobile only */}
-      <Button variant="ghost" size="icon" className="md:hidden" onClick={toggle} aria-label="Open menu">
-        <Menu size={20} />
+      <Button variant="ghost" size="icon" className="md:hidden h-10 w-10" onClick={toggle} aria-label="Open menu">
+        <Menu size={24} />
       </Button>
 
       <div className="flex-1" />
 
       {/* Theme toggle */}
-      <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
-        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8" onClick={toggleTheme} aria-label="Toggle theme">
+        {theme === 'dark' ? <Sun className="size-5 sm:size-[18px]" /> : <Moon className="size-5 sm:size-[18px]" />}
       </Button>
 
       {/* Notifications */}
-      <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')} aria-label="Notifications">
-        <Bell size={18} />
+      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8" onClick={() => navigate('/notifications')} aria-label="Notifications">
+        <Bell className="size-5 sm:size-[18px]" />
       </Button>
 
       {/* User menu */}
