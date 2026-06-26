@@ -1,4 +1,4 @@
-export type TransactionType = 'income' | 'expense' | 'transfer';
+export type TransactionType = 'income' | 'expense' | 'transfer' | 'adjustment';
 export type AccountType     = 'cash' | 'credit_card' | 'savings_account' | 'investments' | 'other';
 export type UserRole        = 'user' | 'superadmin';
 export type BudgetPeriod    = 'monthly' | 'yearly';
@@ -22,6 +22,7 @@ export interface Account {
   name: string;
   type: AccountType;
   balance: number;
+  initial_balance: number;
   is_archived: boolean;
   is_primary: boolean;
   notes: string | null;

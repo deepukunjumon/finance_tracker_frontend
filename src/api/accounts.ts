@@ -51,7 +51,18 @@ export async function deleteAccount(id: string): Promise<void> {
   await api.delete(`/accounts/${id}`);
 }
 
-export async function adjustBalance(id: string, newBalance: number): Promise<Account> {
-  const response = await api.post<ApiResponse<Account>>(`/accounts/${id}/adjust-balance`, { new_balance: newBalance });
+export async function adjustByRecord(id: string, newBalance: number): Promise<Account> {
+  const response = await api.post<ApiResponse<Account>>(`/accounts/${id}/adjust-balance`, {
+    type: 'adjust_by_record',
+    new_balance: newBalance,
+  });
+  return response.data.data;
+}
+
+export async function changeInitialBalance(id: string, newInitialBalance: number): Promise<Account> {
+  const response = await api.post<ApiResponse<Account>>(`/accounts/${id}/adjust-balance`, {
+    type: 'change_initial_balance',
+    new_initial_balance: newInitialBalance,
+  });
   return response.data.data;
 }

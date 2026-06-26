@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { adjustBalance, archiveAccount, deleteAccount, getAccounts } from '@/api/accounts';
+import { adjustByRecord, changeInitialBalance, archiveAccount, deleteAccount, getAccounts } from '@/api/accounts';
 import { useAuthStore } from '@/store/authStore';
 import { formatCurrency, getErrorMessage } from '@/lib/utils';
 import type { Account, AccountType } from '@/types';
@@ -26,6 +26,8 @@ const ACCOUNT_TYPE_CONFIG: Record<AccountType, { label: string; Icon: React.Elem
   other:           { label: 'Other',           Icon: Folder,     color: 'text-amber-600',   bg: 'bg-amber-50 dark:bg-amber-950' },
 };
 
+type AdjustType = 'adjust_by_record' | 'change_initial_balance';
+
 interface AdjustBalanceDialogProps {
   account:     Account | null;
   currency:    string;
@@ -34,57 +36,110 @@ interface AdjustBalanceDialogProps {
 }
 
 function AdjustBalanceDialog({ account, currency, onClose, onAdjusted }: AdjustBalanceDialogProps) {
-  const [value,   setValue]   = useState('');
-  const [saving,  setSaving]  = useState(false);
+  const [adjustType, setAdjustType] = useState<AdjustType>('adjust_by_record');
+  const [value, setValue] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (account) setValue(String(account.balance));
+    if (account) {
+      setAdjustType('adjust_by_record');
+      setValue(String(account.balance));
+    }
   }, [account]);
 
+  const handleTypeChange = (type: AdjustType) => {
+    setAdjustType(type);
+    setValue(type === 'adjust_by_record' ? String(account?.balance ?? 0) : String(account?.initial_balance ?? 0));
+  };
+
+  const numValue = parseFloat(value);
+  const isValid = !isNaN(numValue);
+  const diff = isValid ? numValue - (account?.balance ?? 0) : 0;
+  const canSave = isValid && (adjustType === 'change_initial_balance' || diff !== 0);
+
   const handleSave = async () => {
-    if (!account) return;
-    const num = parseFloat(value);
-    if (isNaN(num)) { toast.error('Enter a valid number.'); return; }
+    if (!account || !canSave) return;
     setSaving(true);
     try {
-      const updated = await adjustBalance(account.id, num);
+      const updated = adjustType === 'adjust_by_record'
+        ? await adjustByRecord(account.id, numValue)
+        : await changeInitialBalance(account.id, numValue);
       onAdjusted(updated);
       onClose();
-      toast.success('Balance updated.');
+      toast.success(adjustType === 'adjust_by_record' ? 'Balance adjusted with transaction record.' : 'Initial balance updated.');
     } catch (e) { toast.error(getErrorMessage(e)); }
     finally { setSaving(false); }
   };
 
   return (
     <Dialog open={!!account} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Edit Balance</DialogTitle>
+          <DialogTitle>Edit Balance - {account?.name}</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4 py-2">
-          <div className="space-y-1">
-            <Label>Account</Label>
-            <p className="text-sm font-medium">{account?.name}</p>
+          {/* Method selection */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleTypeChange('adjust_by_record')}
+              className={`rounded-lg border p-3 text-left transition-colors cursor-pointer space-y-0.5 ${
+                adjustType === 'adjust_by_record' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:border-muted-foreground/30'
+              }`}
+            >
+              <p className="text-xs font-semibold">Adjust by Record</p>
+              <p className="text-[10px] text-muted-foreground leading-tight">Creates a transaction</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeChange('change_initial_balance')}
+              className={`rounded-lg border p-3 text-left transition-colors cursor-pointer space-y-0.5 ${
+                adjustType === 'change_initial_balance' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:border-muted-foreground/30'
+              }`}
+            >
+              <p className="text-xs font-semibold">Change Initial</p>
+              <p className="text-[10px] text-muted-foreground leading-tight">No transaction record</p>
+            </button>
           </div>
+
+          {/* Current value */}
           <div className="space-y-1">
-            <Label>Current balance</Label>
-            <p className="text-sm text-muted-foreground">{formatCurrency(account?.balance ?? 0, currency)}</p>
+            <Label className="text-xs text-muted-foreground">
+              {adjustType === 'adjust_by_record' ? 'Current Balance' : 'Current Initial Balance'}
+            </Label>
+            <p className="text-sm font-medium">
+              {formatCurrency(adjustType === 'adjust_by_record' ? (account?.balance ?? 0) : (account?.initial_balance ?? 0), currency)}
+            </p>
           </div>
+
+          {/* Input */}
           <div className="space-y-1">
-            <Label>New balance</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="0.00"
-            />
+            <Label>{adjustType === 'adjust_by_record' ? 'New Balance' : 'New Initial Balance'}</Label>
+            <Input type="number" step="0.01" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0.00" />
           </div>
+
+          {/* Live preview */}
+          {isValid && canSave && (
+            adjustType === 'adjust_by_record' ? (
+              <div className="rounded-lg bg-muted/50 border p-2.5">
+                <p className="text-[10px] text-muted-foreground mb-0.5">Adjustment transaction</p>
+                <p className={`text-sm font-semibold ${diff > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {diff > 0 ? '+' : ''}{formatCurrency(diff, currency)}
+                </p>
+              </div>
+            ) : (
+              <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                This won't create a transaction record.
+              </p>
+            )
+          )}
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Update Balance'}
+          <Button onClick={handleSave} disabled={saving || !canSave}>
+            {saving ? 'Saving...' : 'Update'}
           </Button>
         </DialogFooter>
       </DialogContent>

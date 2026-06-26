@@ -241,6 +241,7 @@ function TransactionsPage() {
             <SelectItem value="income">Income</SelectItem>
             <SelectItem value="expense">Expense</SelectItem>
             <SelectItem value="transfer">Transfer</SelectItem>
+            <SelectItem value="adjustment">Adjustment</SelectItem>
           </SelectContent>
         </Select>
 
@@ -288,17 +289,17 @@ function TransactionsPage() {
               <div key={t.id} className="flex items-start sm:items-center justify-between px-4 sm:px-5 py-3 sm:py-3 hover:bg-muted/30 transition-colors group gap-3">
                 <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
                   <div className={`size-8 sm:size-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 sm:mt-0
-                    ${t.type === 'income' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700' : t.type === 'expense' ? 'bg-rose-100 dark:bg-rose-900 text-rose-700' : 'bg-blue-100 dark:bg-blue-900 text-blue-700'}`}>
-                    {t.type === 'income' ? '+' : t.type === 'expense' ? '−' : '⇄'}
+                    ${t.type === 'income' ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700' : t.type === 'expense' ? 'bg-rose-100 dark:bg-rose-900 text-rose-700' : t.type === 'adjustment' ? 'bg-violet-100 dark:bg-violet-900 text-violet-700' : 'bg-blue-100 dark:bg-blue-900 text-blue-700'}`}>
+                    {t.type === 'income' ? '+' : t.type === 'expense' ? '−' : t.type === 'adjustment' ? '±' : '⇄'}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{t.category?.name ?? 'Uncategorised'}</p>
+                    <p className="text-sm font-medium truncate">{t.type === 'adjustment' ? 'Adjustment' : (t.category?.name ?? 'Uncategorised')}</p>
                     <p className="text-xs text-muted-foreground truncate">{formatDate(t.date)}{t.time ? ` · ${formatTime(t.time)}` : ''} · {t.account?.name}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                  <span className={`text-xs sm:text-sm font-semibold ${t.type === 'income' ? 'text-emerald-600' : t.type === 'expense' ? 'text-rose-600' : 'text-blue-600'}`}>
-                    {t.type === 'income' ? '+' : '−'}{formatCurrency(t.amount, currency)}
+                  <span className={`text-xs sm:text-sm font-semibold ${t.type === 'income' ? 'text-emerald-600' : t.type === 'expense' ? 'text-rose-600' : t.type === 'adjustment' ? 'text-violet-600' : 'text-blue-600'}`}>
+                    {t.type === 'income' ? '+' : t.type === 'adjustment' ? '±' : '−'}{formatCurrency(t.amount, currency)}
                   </span>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
