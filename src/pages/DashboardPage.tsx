@@ -19,6 +19,8 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -188,6 +190,7 @@ interface DashboardSections {
   monthly_trend: boolean;
   expense_by_category: boolean;
   income_by_category: boolean;
+  balance_trend: boolean;
 }
 
 const DEFAULT_SECTIONS: DashboardSections = {
@@ -196,6 +199,7 @@ const DEFAULT_SECTIONS: DashboardSections = {
   monthly_trend: true,
   expense_by_category: true,
   income_by_category: true,
+  balance_trend: true,
 };
 
 const SECTION_LABELS: Record<keyof DashboardSections, string> = {
@@ -203,6 +207,7 @@ const SECTION_LABELS: Record<keyof DashboardSections, string> = {
   monthly_trend: 'Income vs Expense Chart',
   income_by_category: 'Income by Category',
   expense_by_category: 'Expense by Category',
+  balance_trend: 'Balance Trend',
   recent_transactions: 'Recent Transactions',
 };
 
@@ -228,6 +233,7 @@ function DashboardPage() {
   const barChartRef = useRef<HTMLDivElement>(null);
   const expensePieRef = useRef<HTMLDivElement>(null);
   const categoryPieRef = useRef<HTMLDivElement>(null);
+  const balanceTrendRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async (month?: string, showSkeleton = true) => {
     if (showSkeleton) setIsLoading(true);
@@ -262,6 +268,7 @@ function DashboardPage() {
         monthly_trend:        monthStats.monthly_trend,
         expense_by_category:  monthStats.expense_by_category,
         income_by_category:   monthStats.income_by_category,
+        balance_trend:        monthStats.balance_trend,
       } : monthStats);
     } catch (e) {
       toast.error(getErrorMessage(e));
@@ -436,7 +443,7 @@ function DashboardPage() {
       </div>}
 
       {/* Month picker shared across charts */}
-      {(sections.monthly_trend || sections.expense_by_category || sections.income_by_category) && <div className="flex items-center justify-between">
+      {(sections.monthly_trend || sections.balance_trend || sections.expense_by_category || sections.income_by_category) && <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold">Charts & Insights</h2>
         <MonthPicker
           value={selectedMonth}
@@ -449,7 +456,7 @@ function DashboardPage() {
       </div>}
 
       {/* Charts row */}
-      {(sections.monthly_trend || sections.expense_by_category || sections.income_by_category) && <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-opacity ${chartLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+      {(sections.monthly_trend || sections.balance_trend || sections.expense_by_category || sections.income_by_category) && <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-opacity ${chartLoading ? 'opacity-50 pointer-events-none' : ''}`}>
         {/* Income vs Expense trend */}
         {sections.monthly_trend && <div ref={barChartRef} className="rounded-xl border bg-card p-5">
           <div className="flex items-center justify-between mb-4">
@@ -497,6 +504,37 @@ function DashboardPage() {
                 <Bar dataKey="Income" fill="#22c55e" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="Expense" fill="#ef4444" radius={[6, 6, 0, 0]} />
               </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>}
+
+        {/* Balance Trend */}
+        {sections.balance_trend && <div ref={balanceTrendRef} className="rounded-xl border bg-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold">Balance Trend</h3>
+            {(stats?.balance_trend?.length ?? 0) > 0 && (
+              <Button
+                data-download-hide
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-7 cursor-pointer"
+                onClick={() => balanceTrendRef.current && downloadCardAsImage(balanceTrendRef.current, "balance_trend.png")}
+              >
+                <Download size={13} /> Download
+              </Button>
+            )}
+          </div>
+          {!stats?.balance_trend?.length ? (
+            <ChartEmptyState message="No balance data this month" />
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={stats.balance_trend.map((d) => ({ ...d, balance: Number(d.balance) }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={55} domain={[0, 'auto']} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                <Tooltip content={<CustomTooltip prefix="₹" />} cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1, strokeDasharray: "4 4" }} />
+                <Line type="monotone" dataKey="balance" name="Balance" stroke="#4287f5" strokeWidth={2.5} dot={{ r: 3, fill: "#4287f5", strokeWidth: 0 }} activeDot={{ r: 5, fill: "#6366f1", strokeWidth: 2, stroke: "#fff" }} />
+              </LineChart>
             </ResponsiveContainer>
           )}
         </div>}
