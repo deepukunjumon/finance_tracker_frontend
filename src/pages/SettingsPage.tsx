@@ -49,7 +49,7 @@ function SettingsPage() {
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(DEFAULT_NOTIF_PREFS);
   const [notifLoading, setNotifLoading] = useState(true);
   const [appPrefs, setAppPrefs] = useState<UserPreferences>(DEFAULT_APP_PREFS);
-  const [prefsLoading, setPrefsLoading] = useState(true);
+  const [_prefsLoading, setPrefsLoading] = useState(true);
   const [currency, setCurrency] = useState(user?.currency ?? 'INR');
   const [isSavingCurrency, setIsSavingCurrency] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
