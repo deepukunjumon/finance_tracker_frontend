@@ -9,11 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { getPublicSettings } from '@/api/settings';
-import { getAccounts } from '@/api/accounts';
 import { getCurrencySymbol, getErrorMessage } from '@/lib/utils';
 import { updateProfile, getNotificationPreferences, updateNotificationPreferences, type NotificationPreferences } from '@/api/profile';
 import { exportTransactionsCsv } from '@/api/transactions';
-import type { Account } from '@/types';
 
 const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD', 'JPY', 'CHF', 'CNY', 'MYR'];
 const DATE_FORMATS = [
@@ -52,7 +50,6 @@ const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
 function SettingsPage() {
   const { user, updateUser } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
-  const [accounts, setAccounts] = useState<Account[]>([]);
   const [appVersion, setAppVersion] = useState('');
   const [appName, setAppName] = useState('');
 
@@ -65,7 +62,6 @@ function SettingsPage() {
 
   useEffect(() => {
     void getPublicSettings().then((s) => { setAppVersion(s.app_version); setAppName(s.app_name); });
-    void getAccounts().then(setAccounts).catch(() => {});
     void getNotificationPreferences()
       .then(setNotifPrefs)
       .catch(() => {})
@@ -203,17 +199,6 @@ function SettingsPage() {
               <SelectContent>
                 <SelectItem value="light"><span className="flex items-center gap-2"><Sun size={14} /> Light</span></SelectItem>
                 <SelectItem value="dark"><span className="flex items-center gap-2"><Moon size={14} /> Dark</span></SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label>Default Account</Label>
-            <Select value={appPrefs.default_account_id} onValueChange={(v) => updateAppPref('default_account_id', v)}>
-              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
-              <SelectContent>
-                {accounts.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>
