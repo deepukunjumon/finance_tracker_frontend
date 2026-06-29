@@ -16,8 +16,19 @@ export function formatCurrency(amount: number, currency = 'INR'): string {
   }).format(amount)
 }
 
+export function getUserDateFormat(): string {
+  try {
+    const raw = localStorage.getItem('cashlytics_user');
+    if (raw) {
+      const user = JSON.parse(raw);
+      if (user?.preferences?.date_format) return user.preferences.date_format;
+    }
+  } catch {}
+  return 'd MMM yyyy';
+}
+
 export function formatDate(date: string): string {
-  return format(parseISO(date), "d MMM yyyy")
+  return format(parseISO(date), getUserDateFormat())
 }
 
 export function formatTime(time: string | null | undefined): string {

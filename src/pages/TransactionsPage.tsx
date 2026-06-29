@@ -80,6 +80,16 @@ function TransactionsPage() {
   });
   const txType = watch('type');
 
+  const freshDefaults = () => ({
+    type: 'expense' as const,
+    account_id: user?.preferences?.default_account_id ?? '',
+    category_id: '',
+    amount: undefined as any,
+    date: new Date().toISOString().split('T')[0],
+    time: new Date().toTimeString().slice(0, 5),
+    note: '',
+  });
+
   useEffect(() => {
     if (dialogOpen) {
       void Promise.all([getAccounts(), getCategories()]).then(([accs, cats]) => {

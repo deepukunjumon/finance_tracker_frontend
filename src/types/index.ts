@@ -13,6 +13,11 @@ export interface User {
   role: UserRole;
   profile_picture: string | null;
   onboarding_completed: boolean;
+  preferences?: {
+    date_format: string;
+    default_account_id: string;
+    week_start: string;
+  };
 }
 
 export interface Account {

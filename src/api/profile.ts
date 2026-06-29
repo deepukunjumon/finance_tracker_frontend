@@ -52,3 +52,19 @@ export async function updateNotificationPreferences(prefs: NotificationPreferenc
   const response = await api.put<ApiResponse<NotificationPreferences>>('/profile/notification-preferences', prefs);
   return response.data.data;
 }
+
+export interface UserPreferences {
+  date_format: string;
+  default_account_id: string;
+  week_start: string;
+}
+
+export async function getUserPreferences(): Promise<UserPreferences> {
+  const response = await api.get<ApiResponse<UserPreferences>>('/profile/preferences');
+  return response.data.data;
+}
+
+export async function updateUserPreferences(prefs: Partial<UserPreferences>): Promise<UserPreferences> {
+  const response = await api.put<ApiResponse<UserPreferences>>('/profile/preferences', prefs);
+  return response.data.data;
+}
