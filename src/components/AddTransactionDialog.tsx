@@ -54,7 +54,7 @@ export function AddTransactionDialog({ open, onOpenChange, onCreated }: AddTrans
 
   const freshDefaults = () => ({
     type: 'expense' as const,
-    account_id: '',
+    account_id: user?.preferences?.default_account_id ?? '',
     category_id: '',
     amount: undefined as any,
     date: new Date().toISOString().split('T')[0],

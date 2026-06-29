@@ -11,7 +11,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { getPublicSettings } from '@/api/settings';
 import { getAccounts } from '@/api/accounts';
 import { getCurrencySymbol, getErrorMessage } from '@/lib/utils';
-import { updateProfile, getNotificationPreferences, updateNotificationPreferences, type NotificationPreferences } from '@/api/profile';
+import { updateProfile, getNotificationPreferences, updateNotificationPreferences, getUserPreferences, updateUserPreferences, type NotificationPreferences, type UserPreferences } from '@/api/profile';
 import { exportTransactionsCsv } from '@/api/transactions';
 import type { Account } from '@/types';
 
@@ -27,21 +27,11 @@ const WEEK_STARTS = [
   { value: 'monday', label: 'Monday' },
 ];
 
-const APP_PREFS_KEY = 'cashlytics_app_prefs';
-
-interface AppPrefs {
-  date_format: string;
-  default_account_id: string;
-  week_start: string;
-}
-
-function loadAppPrefs(): AppPrefs {
-  try {
-    const stored = localStorage.getItem(APP_PREFS_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {}
-  return { date_format: 'd MMM yyyy', default_account_id: '', week_start: 'sunday' };
-}
+const DEFAULT_APP_PREFS: UserPreferences = {
+  date_format: 'd MMM yyyy',
+  default_account_id: '',
+  week_start: 'sunday',
+};
 
 const DEFAULT_NOTIF_PREFS: NotificationPreferences = {
   email: true, sms: false, push: true,
@@ -58,7 +48,8 @@ function SettingsPage() {
 
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences>(DEFAULT_NOTIF_PREFS);
   const [notifLoading, setNotifLoading] = useState(true);
-  const [appPrefs, setAppPrefs] = useState<AppPrefs>(loadAppPrefs);
+  const [appPrefs, setAppPrefs] = useState<UserPreferences>(DEFAULT_APP_PREFS);
+  const [_prefsLoading, setPrefsLoading] = useState(true);
   const [currency, setCurrency] = useState(user?.currency ?? 'INR');
   const [isSavingCurrency, setIsSavingCurrency] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -70,6 +61,10 @@ function SettingsPage() {
       .then(setNotifPrefs)
       .catch(() => {})
       .finally(() => setNotifLoading(false));
+    void getUserPreferences()
+      .then(setAppPrefs)
+      .catch(() => {})
+      .finally(() => setPrefsLoading(false));
   }, []);
 
   const handleNotifToggle = async (key: keyof NotificationPreferences, value: boolean) => {
@@ -84,10 +79,16 @@ function SettingsPage() {
     }
   };
 
-  const updateAppPref = (key: keyof AppPrefs, value: string) => {
+  const updateAppPref = async (key: keyof UserPreferences, value: string) => {
     const updated = { ...appPrefs, [key]: value };
     setAppPrefs(updated);
-    localStorage.setItem(APP_PREFS_KEY, JSON.stringify(updated));
+    try {
+      await updateUserPreferences({ [key]: value });
+      if (user) updateUser({ ...user, preferences: updated });
+    } catch (e) {
+      setAppPrefs(appPrefs);
+      toast.error(getErrorMessage(e));
+    }
   };
 
   const handleCurrencyChange = async (c: string) => {
