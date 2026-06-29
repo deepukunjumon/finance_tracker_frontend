@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Archive, CreditCard, Edit2, Folder, MoreHorizontal, PiggyBank, Plus, Trash2, TrendingUp, Wallet } from 'lucide-react';
+import { Archive, CreditCard, Edit2, Folder, MoreHorizontal, PiggyBank, Plus, Star, Trash2, TrendingUp, Wallet } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { adjustByRecord, changeInitialBalance, archiveAccount, deleteAccount, getAccounts } from '@/api/accounts';
+import { adjustByRecord, changeInitialBalance, archiveAccount, deleteAccount, getAccounts, setDefaultAccount } from '@/api/accounts';
 import { useAuthStore } from '@/store/authStore';
 import { formatCurrency, getErrorMessage } from '@/lib/utils';
 import type { Account, AccountType } from '@/types';
@@ -175,6 +175,14 @@ function AccountsPage() {
     } catch (e) { toast.error(getErrorMessage(e)); }
   };
 
+  const handleSetDefault = async (id: string) => {
+    try {
+      await setDefaultAccount(id);
+      await fetchAccounts();
+      toast.success('Default account updated.');
+    } catch (e) { toast.error(getErrorMessage(e)); }
+  };
+
   const handleDelete = async (id: string) => {
     try {
       await deleteAccount(id);
@@ -233,6 +241,11 @@ function AccountsPage() {
                     <Icon className={`size-5 ${!accentColor ? config.color : ''}`} />
                   </div>
                   <div className="flex items-center gap-1">
+                    {account.is_primary && (
+                      <span className="text-xs text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-full px-2 py-0.5 flex items-center gap-1">
+                        <Star size={10} className="fill-current" /> Default
+                      </span>
+                    )}
                     {account.is_archived && (
                       <span className="text-xs text-muted-foreground border rounded-full px-2 py-0.5">Archived</span>
                     )}
@@ -249,6 +262,11 @@ function AccountsPage() {
                         <DropdownMenuItem onClick={() => setAdjustAccount(account)}>
                           <Edit2 size={14} className="mr-2" /> Edit Balance
                         </DropdownMenuItem>
+                        {!account.is_primary && (
+                          <DropdownMenuItem onClick={() => void handleSetDefault(account.id)}>
+                            <Star size={14} className="mr-2" /> Set as Default
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => void handleArchive(account.id)}>
                           <Archive size={14} className="mr-2" />
                           {account.is_archived ? 'Unarchive' : 'Archive'}

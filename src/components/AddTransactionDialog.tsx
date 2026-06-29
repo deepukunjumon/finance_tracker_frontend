@@ -75,6 +75,16 @@ export function AddTransactionDialog({ open, onOpenChange, onCreated }: AddTrans
         const [accs, cats] = await Promise.all([getAccounts(), getCategories()]);
         setAccounts(accs);
         setCategories(cats);
+        const defaultAcc = accs.find((a) => a.is_primary)?.id ?? '';
+        reset({
+          type: 'expense',
+          account_id: defaultAcc,
+          category_id: '',
+          amount: undefined as any,
+          date: new Date().toISOString().split('T')[0],
+          time: new Date().toTimeString().slice(0, 5),
+          note: '',
+        });
       } catch (e) { toast.error(getErrorMessage(e)); }
     })();
   }, [open]);
@@ -121,7 +131,7 @@ export function AddTransactionDialog({ open, onOpenChange, onCreated }: AddTrans
             {/* Account */}
             <div className="space-y-1">
               <Label>Account</Label>
-              <Select onValueChange={(v) => setValue('account_id', v)}>
+              <Select value={watch('account_id')} onValueChange={(v) => setValue('account_id', v)}>
                 <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
                 <SelectContent>
                   {accounts.map((a) => (

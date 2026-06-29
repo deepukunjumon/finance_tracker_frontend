@@ -66,3 +66,8 @@ export async function changeInitialBalance(id: string, newInitialBalance: number
   });
   return response.data.data;
 }
+
+export async function setDefaultAccount(id: string): Promise<Account> {
+  const response = await api.patch<ApiResponse<Account>>(`/accounts/${id}/set-default`);
+  return response.data.data;
+}

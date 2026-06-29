@@ -92,22 +92,31 @@ function TransactionsPage() {
 
   useEffect(() => {
     if (dialogOpen) {
-      if (editingTx) {
-        reset({
-          type: editingTx.type as any,
-          account_id: editingTx.account_id ?? '',
-          category_id: editingTx.category_id ?? '',
-          amount: editingTx.amount,
-          date: editingTx.date?.split('T')[0] ?? '',
-          time: editingTx.time ?? '',
-          note: editingTx.note ?? '',
-        });
-      } else {
-        reset(freshDefaults());
-      }
       void Promise.all([getAccounts(), getCategories()]).then(([accs, cats]) => {
         setAccounts(accs);
         setCategories(cats);
+        if (editingTx) {
+          reset({
+            type: editingTx.type as any,
+            account_id: editingTx.account_id ?? '',
+            category_id: editingTx.category_id ?? '',
+            amount: editingTx.amount,
+            date: editingTx.date?.split('T')[0] ?? '',
+            time: editingTx.time ?? '',
+            note: editingTx.note ?? '',
+          });
+        } else {
+          const defaultAcc = accs.find((a) => a.is_primary)?.id ?? '';
+          reset({
+            type: 'expense',
+            account_id: defaultAcc,
+            category_id: '',
+            amount: undefined as any,
+            date: new Date().toISOString().split('T')[0],
+            time: new Date().toTimeString().slice(0, 5),
+            note: '',
+          });
+        }
       });
     }
   }, [dialogOpen]);
@@ -377,7 +386,7 @@ function TransactionsPage() {
             </div>
             <div className="space-y-1">
               <Label>Account</Label>
-              <Select onValueChange={(v) => setValue('account_id', v)}>
+              <Select value={watch('account_id')} onValueChange={(v) => setValue('account_id', v)}>
                 <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
                 <SelectContent>
                   {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
