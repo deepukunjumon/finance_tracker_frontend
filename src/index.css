@@ -81,6 +81,33 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* ── Cursor styles for interactive elements ── */
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  a {
+    cursor: pointer;
+  }
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+  input:not([type='checkbox']):not([type='radio']):not(:disabled) {
+    cursor: text;
+  }
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled) {
+    cursor: pointer;
+  }
+  textarea:not(:disabled) {
+    cursor: text;
+  }
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    cursor: not-allowed;
+  }
   html {
     font-family: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
   }
