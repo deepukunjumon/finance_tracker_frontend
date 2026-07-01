@@ -65,12 +65,14 @@ interface NavSectionProps {
 function NavSection({ label, items, isOpen, onNavigate }: NavSectionProps) {
   return (
     <div>
-      {isOpen && (
-        <p className="text-[10px] uppercase tracking-widest text-[var(--sidebar-foreground)]/40 px-3 mb-1 mt-4 font-semibold">
-          {label}
-        </p>
-      )}
-      {!isOpen && <div className="h-4" />}
+      <p
+        className={cn(
+          'text-[10px] uppercase tracking-widest text-[var(--sidebar-foreground)]/40 px-3 mb-1 mt-4 font-semibold overflow-hidden whitespace-nowrap transition-all duration-300',
+          isOpen ? 'opacity-100 max-h-4' : 'opacity-0 max-h-0 mt-0 mb-0'
+        )}
+      >
+        {label}
+      </p>
       <div className="space-y-0.5">
         {items.map(({ to, label: itemLabel, icon: Icon }) => (
           <NavLink
@@ -81,14 +83,20 @@ function NavSection({ label, items, isOpen, onNavigate }: NavSectionProps) {
               cn(
                 'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
                 'text-[var(--sidebar-foreground)] hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)]',
-                isActive && 'bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)] font-semibold',
-                !isOpen && 'justify-center px-0'
+                isActive && 'bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)] font-semibold'
               )
             }
             title={!isOpen ? itemLabel : undefined}
           >
             <Icon size={18} className="shrink-0" />
-            {isOpen && <span className="truncate">{itemLabel}</span>}
+            <span
+              className={cn(
+                'truncate overflow-hidden transition-all duration-300',
+                isOpen ? 'opacity-100 max-w-[160px]' : 'opacity-0 max-w-0'
+              )}
+            >
+              {itemLabel}
+            </span>
           </NavLink>
         ))}
       </div>
@@ -131,22 +139,21 @@ export function Sidebar() {
         )}
       >
         {/* Logo / Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-[var(--sidebar-border)] shrink-0">
-          {isOpen && (
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
-                <TrendingUp size={15} className="text-primary-foreground" />
-              </div>
-              <span className="text-[var(--sidebar-foreground)] font-bold text-sm tracking-tight truncate">
-                Cashlytics
-              </span>
-            </div>
-          )}
-          {!isOpen && (
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center mx-auto">
+        <div className="relative flex items-center justify-between h-16 px-4 border-b border-[var(--sidebar-border)] shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
               <TrendingUp size={15} className="text-primary-foreground" />
             </div>
-          )}
+            <span
+              className={cn(
+                'text-[var(--sidebar-foreground)] font-bold text-sm tracking-tight truncate overflow-hidden transition-all duration-300',
+                isOpen ? 'opacity-100 max-w-[160px]' : 'opacity-0 max-w-0'
+              )}
+            >
+              Cashlytics
+            </span>
+          </div>
+          {/* Collapse/expand toggle — single stable element, decoupled from header flex layout */}
           <button
             onClick={toggle}
             className={cn(
@@ -178,12 +185,14 @@ export function Sidebar() {
 
           {user?.role === 'superadmin' && (
             <div>
-              {isOpen && (
-                <p className="text-[10px] uppercase tracking-widest text-amber-500 px-3 mb-1 mt-4 font-semibold">
-                  Admin
-                </p>
-              )}
-              {!isOpen && <div className="h-4" />}
+              <p
+                className={cn(
+                  'text-[10px] uppercase tracking-widest text-amber-500 px-3 mb-1 mt-4 font-semibold overflow-hidden whitespace-nowrap transition-all duration-300',
+                  isOpen ? 'opacity-100 max-h-4' : 'opacity-0 max-h-0 mt-0 mb-0'
+                )}
+              >
+                Admin
+              </p>
               <NavLink
                 to="/superadmin"
                 onClick={closeMobile}
@@ -191,14 +200,20 @@ export function Sidebar() {
                   cn(
                     'flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
                     'text-amber-600 dark:text-amber-400 hover:bg-amber-500/10',
-                    isActive && 'bg-amber-500/10 font-semibold',
-                    !isOpen && 'justify-center px-0'
+                    isActive && 'bg-amber-500/10 font-semibold'
                   )
                 }
                 title={!isOpen ? 'Superadmin' : undefined}
               >
                 <Shield size={18} className="shrink-0" />
-                {isOpen && <span className="truncate">Superadmin Panel</span>}
+                <span
+                  className={cn(
+                    'truncate overflow-hidden transition-all duration-300',
+                    isOpen ? 'opacity-100 max-w-[160px]' : 'opacity-0 max-w-0'
+                  )}
+                >
+                  Superadmin Panel
+                </span>
               </NavLink>
             </div>
           )}
@@ -206,8 +221,13 @@ export function Sidebar() {
 
         {/* Bottom: user info + logout */}
         <div className="shrink-0 px-2 pb-3 border-t border-[var(--sidebar-border)] pt-3 space-y-1">
-          {isOpen && user && (
-            <div className="px-2.5 py-2 rounded-md bg-[var(--sidebar-accent)]/50 mb-2">
+          {user && (
+            <div
+              className={cn(
+                'rounded-md bg-[var(--sidebar-accent)]/50 overflow-hidden transition-all duration-300',
+                isOpen ? 'opacity-100 max-h-16 px-2.5 py-2 mb-2' : 'opacity-0 max-h-0 px-2.5 py-0 mb-0'
+              )}
+            >
               <p className="text-xs font-medium text-[var(--sidebar-foreground)] truncate">{user.name}</p>
               <p className="text-[10px] text-[var(--sidebar-foreground)]/60 truncate">{user.email}</p>
             </div>
@@ -216,13 +236,19 @@ export function Sidebar() {
             onClick={() => setConfirmOpen(true)}
             className={cn(
               'w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-colors',
-              'text-[var(--sidebar-foreground)] hover:bg-destructive/10 hover:text-destructive cursor-pointer',
-              !isOpen && 'justify-center px-0'
+              'text-[var(--sidebar-foreground)] hover:bg-destructive/10 hover:text-destructive cursor-pointer'
             )}
             title={!isOpen ? 'Logout' : undefined}
           >
             <LogOut size={18} className="shrink-0" />
-            {isOpen && <span>Logout</span>}
+            <span
+              className={cn(
+                'truncate overflow-hidden transition-all duration-300',
+                isOpen ? 'opacity-100 max-w-[160px]' : 'opacity-0 max-w-0'
+              )}
+            >
+              Logout
+            </span>
           </button>
         </div>
       </aside>
